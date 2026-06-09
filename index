@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complejidad Algorítmica – Entrenador de Examen</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --blue: #58a6ff;
+    --purple: #bc8cff;
+    --cyan: #79c0ff;
+    --orange: #ffa657;
+    --easy: #238636;
+    --med: #9e6a03;
+    --hard: #da3633;
+    --vhard: #8957e5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--blue); }
+  .logo span { color: var(--muted); }
+  .stats-bar { display: flex; gap: 20px; }
+  .stat { text-align: center; }
+  .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+  .stat-lbl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.yellow { color: var(--yellow); }
+  .stat-val.blue { color: var(--blue); }
+
+  /* ── LAYOUT ── */
+  .container { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); }
+
+  /* ── SIDEBAR ── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 57px);
+    position: sticky;
+    top: 57px;
+  }
+  .sidebar-title {
+    font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); padding: 8px 16px 6px;
+  }
+  .sidebar-section { margin-bottom: 8px; }
+  .level-badge {
+    display: inline-block; font-size: 0.6rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 2px 7px; border-radius: 20px; margin-right: 6px;
+  }
+  .badge-easy { background: #1f3d26; color: var(--green); }
+  .badge-med  { background: #3d2f08; color: var(--yellow); }
+  .badge-hard { background: #3d1515; color: var(--red); }
+  .badge-vhard{ background: #2d1f4a; color: var(--purple); }
+
+  .ex-btn {
+    width: 100%; text-align: left; background: none; border: none;
+    color: var(--muted); cursor: pointer; padding: 6px 16px;
+    font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+    border-left: 3px solid transparent; transition: all .15s;
+  }
+  .ex-btn:hover { background: var(--surface2); color: var(--text); }
+  .ex-btn.active { background: var(--surface2); color: var(--blue); border-left-color: var(--blue); }
+  .ex-btn.done-ok { color: var(--green); }
+  .ex-btn.done-ok::after { content: '✓'; margin-left: auto; }
+  .ex-btn.done-fail { color: var(--red); }
+  .ex-btn.done-fail::after { content: '✗'; margin-left: auto; }
+  .ex-btn.revealed { color: var(--yellow); }
+  .ex-btn.revealed::after { content: '👁'; margin-left: auto; font-size: .7rem; }
+
+  /* ── MAIN ── */
+  main { padding: 32px; overflow-y: auto; }
+
+  .ex-header { margin-bottom: 20px; }
+  .ex-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .ex-num { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 0.9rem; }
+  .ex-pts { font-size: 0.75rem; background: var(--surface2); color: var(--cyan); padding: 2px 8px; border-radius: 4px; }
+  .ex-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 6px; }
+  .ex-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: visible;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    position: relative;
+  }
+  .code-lines-wrap {
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+  }
+  .code-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .code-line {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 4px 0;
+    border-bottom: 1px solid #1c2330;
+    transition: background .1s;
+  }
+  .code-line:last-child { border-bottom: none; }
+  .code-line:hover { background: rgba(88,166,255,.03); }
+  .code-line.line-correct { background: rgba(63,185,80,.06); }
+  .code-line.line-wrong   { background: rgba(248,81,73,.06); }
+  .code-line.line-revealed { background: rgba(210,153,34,.06); }
+
+  .line-num {
+    width: 36px; min-width: 36px; text-align: right;
+    color: var(--muted); padding: 0 10px 0 0; font-size: 0.75rem;
+    user-select: none; flex-shrink: 0;
+  }
+  .line-code {
+    flex: 1; min-width: 0; padding: 0 8px;
+    white-space: pre; overflow: hidden; text-overflow: ellipsis;
+    font-size: 0.83rem;
+  }
+  .line-answer {
+    width: 170px; min-width: 170px; flex-shrink: 0;
+    padding: 0 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .line-answer.no-answer { width: 0; min-width: 0; padding: 0; }
+
+  /* ── TOKEN SELECTOR ── */
+  .token-selector {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+  .token-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: border-color .15s, color .15s;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .token-display::after {
+    content: '▾';
+    font-size: 0.7rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .token-display.correct::after,
+  .token-display.wrong::after,
+  .token-display.revealed-ans::after { content: ''; }
+  .token-display:hover { border-color: var(--blue); color: var(--text); }
+  .token-display.selected { color: var(--cyan); border-color: var(--cyan); background: rgba(121,192,255,.1); }
+  .token-display.correct  { color: var(--green); border-color: var(--green); background: rgba(63,185,80,.1); }
+  .token-display.wrong    { color: var(--red);   border-color: var(--red);   background: rgba(248,81,73,.1); }
+  .token-display.revealed-ans { color: var(--yellow); border-color: var(--yellow); background: rgba(210,153,34,.1); }
+
+  .token-dropdown {
+    position: absolute; top: calc(100% + 4px); right: 0; left: auto; z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.6);
+    min-width: 150px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .token-dropdown.open { display: none; } /* modal used instead */
+  .token-opt {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+    white-space: nowrap;
+  }
+  .token-opt:last-child { border-bottom: none; }
+  .token-opt:hover { background: var(--surface2); color: var(--blue); }
+
+  .line-status { font-size: 0.8rem; }
+
+  /* ── COMPLEXITY EXPLANATION ── */
+  .complexity-note {
+    font-size: 0.7rem; color: var(--muted); margin-left: 4px;
+    font-style: italic;
+  }
+
+  /* ── RESULT PANEL ── */
+  .result-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .result-panel.show { display: block; }
+  .result-panel h3 { font-size: 0.9rem; margin-bottom: 10px; }
+  .result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
+  .result-row:last-child { border-bottom: none; }
+  .total-complexity { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: var(--cyan); }
+  .result-correct { color: var(--green); }
+  .result-wrong   { color: var(--red); }
+
+  /* ── SOLUTION PANEL ── */
+  .solution-panel {
+    background: rgba(210,153,34,.05);
+    border: 1px solid rgba(210,153,34,.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 12px;
+    display: none;
+  }
+  .solution-panel.show { display: block; }
+  .solution-panel h3 { color: var(--yellow); font-size: 0.9rem; margin-bottom: 10px; }
+  .solution-line { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; margin-bottom: 4px; }
+  .solution-exp  { color: var(--muted); font-size: 0.78rem; margin-left: 16px; margin-bottom: 8px; line-height: 1.4; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .btn {
+    padding: 9px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--blue); color: #000; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: rgba(248,81,73,.15); color: var(--red); border: 1px solid rgba(248,81,73,.3); }
+  .btn-warn { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid rgba(210,153,34,.3); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar { background: var(--surface2); border-radius: 4px; height: 6px; margin-bottom: 24px; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: width .4s ease; }
+
+  /* syntax highlighting */
+  .kw  { color: #ff7b72; }
+  .fn  { color: #d2a8ff; }
+  .num { color: #79c0ff; }
+  .op  { color: #79c0ff; }
+  .var { color: #e6edf3; }
+  .cmt { color: #7d8590; font-style: italic; }
+
+  /* ── TOKEN MODAL (all sizes) ── */
+  .token-modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.65);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .token-modal-overlay.open { display: flex; }
+  .token-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%; max-width: 420px;
+    padding: 20px 0 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  }
+  /* On very small screens, slide up from bottom instead */
+  @media(max-width: 480px) {
+    .token-modal-overlay { align-items: flex-end; padding: 0; }
+    .token-modal { border-radius: 16px 16px 0 0; max-width: 100%; padding-bottom: 32px; }
+  }
+  .token-modal-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); text-align: center; padding: 0 20px 12px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .token-modal-code {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    color: var(--cyan); text-align: center; padding: 6px 20px 10px;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .token-modal-opts {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; padding: 4px 16px;
+  }
+  .token-modal-opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .1s, border-color .1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .token-modal-opt:active { background: rgba(88,166,255,.15); border-color: var(--blue); }
+  .token-modal-cancel {
+    margin: 12px 16px 0;
+    width: calc(100% - 32px);
+    padding: 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  /* responsive */
+  @media(max-width: 700px) {
+    .container { grid-template-columns: 1fr; }
+    aside { position: relative; max-height: 180px; top: 0; overflow-y: auto; }
+    main { padding: 12px; }
+    .stats-bar { gap: 10px; }
+
+    /* Code lines: stack vertically on mobile */
+    .code-line {
+      flex-direction: column;
+      align-items: flex-start;
+      min-height: unset;
+      padding: 8px 0;
+      gap: 6px;
+    }
+    .code-line .line-num {
+      display: none; /* save space */
+    }
+    .line-code {
+      padding: 0 12px;
+      font-size: 0.78rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      width: 100%;
+    }
+    .line-answer {
+      min-width: unset;
+      width: calc(100% - 24px);
+      margin: 0 12px;
+      padding: 0;
+    }
+    .token-display {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .code-header { flex-direction: column; gap: 4px; }
+    .ex-title { font-size: 1rem; }
+    .btn { padding: 10px 16px; font-size: 0.82rem; }
+  }
+
+  /* welcome */
+  .welcome {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 60vh; text-align: center; gap: 16px;
+  }
+  .welcome h2 { font-size: 1.6rem; color: var(--blue); }
+  .welcome p  { color: var(--muted); max-width: 460px; line-height: 1.6; }
+  .welcome-grid {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 8px; width: 320px;
+  }
+  .wcard {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .wcard .n { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+  .wcard .l { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<!-- Mobile token picker modal -->
+<div class="token-modal-overlay" id="token-modal-overlay" onclick="handleModalOverlayClick(event)">
+  <div class="token-modal" id="token-modal">
+    <div class="token-modal-title" id="token-modal-title">Selecciona la complejidad</div>
+    <div class="token-modal-code" id="token-modal-code"></div>
+    <div class="token-modal-opts" id="token-modal-opts"></div>
+    <button class="token-modal-cancel" onclick="closeTokenModal()">Cancelar</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">O<span>(</span>n<span>)</span>&nbsp;Trainer&nbsp;<span style="color:var(--muted);font-size:.8rem">— Algoritmia y Complejidad</span></div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val green" id="st-ok">0</div><div class="stat-lbl">Correctos</div></div>
+    <div class="stat"><div class="stat-val yellow" id="st-total">0</div><div class="stat-lbl">Resueltos</div></div>
+    <div class="stat"><div class="stat-val blue" id="st-pct">0%</div><div class="stat-lbl">Precisión</div></div>
+  </div>
+</header>
+
+<div class="container">
+  <aside id="sidebar"></aside>
+  <main id="main-content">
+    <div class="welcome" id="welcome">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:2.5rem;color:var(--blue)">T(n)</div>
+      <h2>Entrenador de Complejidad Algorítmica</h2>
+      <p>60 ejercicios progresivos para dominar el análisis de complejidad antes de tu examen. Analiza cada línea, selecciona la notación correcta y obtén la complejidad total.</p>
+      <div class="welcome-grid">
+        <div class="wcard"><div class="n" style="color:var(--green)">5</div><div class="l">Muy fáciles</div></div>
+        <div class="wcard"><div class="n" style="color:var(--yellow)">15</div><div class="l">Intermedios</div></div>
+        <div class="wcard"><div class="n" style="color:var(--red)">20</div><div class="l">Difíciles</div></div>
+        <div class="wcard"><div class="n" style="color:var(--purple)">20</div><div class="l">Muy difíciles</div></div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted)">Selecciona un ejercicio en el panel izquierdo para empezar.</p>
+    </div>
+    <div id="exercise-view" style="display:none"></div>
+  </main>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// TOKENS disponibles
+// ─────────────────────────────────────────
+const TOKENS = ['O(1)','O(log n)','O(n)','O(n log n)','O(n²)','O(n² log n)','O(n³)','O(2^n)','O(n!)'];
+
+// ─────────────────────────────────────────
+// EJERCICIOS  (60 en total)
+// Cada línea: { code: string, complexity: string|null (null = no responder), note: string }
+// answer: complejidad total del algoritmo
+// ─────────────────────────────────────────
+const EXERCISES = [
+// ══════════════ MUY FÁCILES (1-5) ══════════════
+{
+  id:1, level:'easy', pts:0.5,
+  title:'Suma de un número',
+  desc:'Un bucle simple que recorre n elementos una sola vez.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++)',  cx:'O(n)',   note:'Itera n veces'},
+    {code:'    sum++;',                  cx:'O(1)',   note:'Operación constante'},
+  ],
+  answer:'O(n)',
+  explanation:'El bucle externo ejecuta n iteraciones. Dentro solo hay una operación O(1). Total: O(n) × O(1) = O(n).'
+},
+{
+  id:2, level:'easy', pts:0.5,
+  title:'Asignación simple',
+  desc:'Tres instrucciones secuenciales sin bucles.',
+  lines:[
+    {code:'x = 5;',     cx:'O(1)', note:'Asignación constante'},
+    {code:'y = x + 3;', cx:'O(1)', note:'Operación aritmética'},
+    {code:'z = y * 2;', cx:'O(1)', note:'Operación aritmética'},
+  ],
+  answer:'O(1)',
+  explanation:'Tres operaciones O(1) en secuencia. T(n) = O(1)+O(1)+O(1) = O(1). No depende de ninguna variable de entrada.'
+},
+{
+  id:3, level:'easy', pts:0.5,
+  title:'Bucle hasta n/2',
+  desc:'Un bucle que va hasta la mitad de n.',
+  lines:[
+    {code:'for (i = 1; i <= n/2; i++)', cx:'O(n)', note:'n/2 iteraciones → O(n)'},
+    {code:'    x = x + i;',              cx:'O(1)', note:'Suma constante'},
+  ],
+  answer:'O(n)',
+  explanation:'Aunque el bucle solo hace n/2 iteraciones, en notación asintótica las constantes se eliminan: O(n/2) = O(n).'
+},
+{
+  id:4, level:'easy', pts:0.5,
+  title:'Condicional simple',
+  desc:'Un if-else dentro de un bucle.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {', cx:'O(n)', note:'n iteraciones'},
+    {code:'    if (a[i] > 0)',          cx:'O(1)', note:'Comparación'},
+    {code:'        sum += a[i];',       cx:'O(1)', note:'Suma'},
+    {code:'    else',                   cx:null,   note:null},
+    {code:'        sum -= a[i];',       cx:'O(1)', note:'Resta'},
+    {code:'}',                          cx:null,   note:null},
+  ],
+  answer:'O(n)',
+  explanation:'El bucle hace n iteraciones. Las operaciones dentro son O(1). El if-else no añade más complejidad. Total: O(n).'
+},
+{
+  id:5, level:'easy', pts:0.5,
+  title:'Dos bucles secuenciales',
+  desc:'Dos bucles independientes uno tras otro.',
+  lines:[
+    {code:'for (i = 0; i < n; i++)',   cx:'O(n)', note:'Primer bucle'},
+    {code:'    a[i] = i;',              cx:'O(1)', note:'Asignación'},
+    {code:'for (j = 0; j < n; j++)',   cx:'O(n)', note:'Segundo bucle'},
+    {code:'    b[j] = j*2;',            cx:'O(1)', note:'Asignación'},
+  ],
+  answer:'O(n)',
+  explanation:'T(n) = O(n) + O(n) = O(2n) = O(n). Dos bucles secuenciales de n iteraciones. Las constantes se eliminan.'
+},
+
+// ══════════════ INTERMEDIOS (6-20) ══════════════
+{
+  id:6, level:'med', pts:1,
+  title:'Bucle with while de mitades',
+  desc:'For externo + while que divide j entre 2 en cada iteración.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',  cx:'O(n)',     note:'n iteraciones externas'},
+    {code:'    j = n;',                   cx:'O(1)',     note:'Asignación'},
+    {code:'    while (j > 0) {',          cx:'O(log n)', note:'j se divide entre 2 → log₂n veces'},
+    {code:'        sum++;',               cx:'O(1)',     note:'Operación constante'},
+    {code:'        j = j / 2;',          cx:'O(1)',     note:'División constante'},
+    {code:'    }',                        cx:null, note:null},
+    {code:'}',                            cx:null, note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'Bucle for: O(n). While interno: j empieza en n y se divide entre 2 → O(log n) iteraciones. Total: O(n) × O(log n) = O(n log n).'
+},
+{
+  id:7, level:'med', pts:1,
+  title:'Búsqueda binaria',
+  desc:'Algoritmo clásico de búsqueda binaria.',
+  lines:[
+    {code:'low = 0; high = n-1;',         cx:'O(1)',     note:'Inicialización'},
+    {code:'while (low <= high) {',        cx:'O(log n)', note:'El espacio se divide a la mitad'},
+    {code:'    mid = (low + high) / 2;',  cx:'O(1)',     note:'Cálculo del punto medio'},
+    {code:'    if (a[mid] == x)',         cx:'O(1)',     note:'Comparación'},
+    {code:'        return mid;',          cx:'O(1)',     note:'Retorno'},
+    {code:'    else if (a[mid] < x)',     cx:'O(1)',     note:'Comparación'},
+    {code:'        low = mid + 1;',       cx:'O(1)',     note:'Actualización'},
+    {code:'    else',                     cx:null,       note:null},
+    {code:'        high = mid - 1;',      cx:'O(1)',     note:'Actualización'},
+    {code:'}',                            cx:null,       note:null},
+  ],
+  answer:'O(log n)',
+  explanation:'En cada iteración el espacio de búsqueda se reduce a la mitad. Tras k pasos: n/2^k = 1 → k = log₂n. Total: O(log n).'
+},
+{
+  id:8, level:'med', pts:1,
+  title:'Dos bucles anidados n×m',
+  desc:'Matriz con dimensiones distintas n y m.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {',   cx:'O(n)', note:'Filas'},
+    {code:'    for (j = 0; j < m; j++)', cx:'O(m)', note:'Columnas'},
+    {code:'        mat[i][j] = 0;',      cx:'O(1)', note:'Asignación'},
+    {code:'}',                            cx:null,   note:null},
+  ],
+  answer:'O(n·m)',
+  explanation:'Dos bucles anidados con n y m iteraciones respectivamente. Total: O(n) × O(m) = O(n·m). Si n=m entonces O(n²).'
+},
+{
+  id:9, level:'med', pts:1,
+  title:'Suma de filas de una matriz n×n',
+  desc:'Recorrido completo de una matriz cuadrada.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {',   cx:'O(n)', note:'n filas'},
+    {code:'    s = 0;',                   cx:'O(1)', note:'Inicialización'},
+    {code:'    for (j = 0; j < n; j++)', cx:'O(n)', note:'n columnas'},
+    {code:'        s += mat[i][j];',     cx:'O(1)', note:'Suma'},
+    {code:'    print(s);',               cx:'O(1)', note:'Imprimir'},
+    {code:'}',                            cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Dos bucles anidados, ambos de n iteraciones. T(n) = O(n) × O(n) = O(n²). La print fuera del bucle interno es O(1) amortizada.'
+},
+{
+  id:10, level:'med', pts:1,
+  title:'Bubble Sort básico',
+  desc:'Algoritmo de ordenación por burbuja.',
+  lines:[
+    {code:'for (i = 0; i < n-1; i++) {',        cx:'O(n)',  note:'n-1 pasadas'},
+    {code:'    for (j = 0; j < n-1-i; j++) {',  cx:'O(n)',  note:'≈ n iteraciones (constante se elimina)'},
+    {code:'        if (a[j] > a[j+1]) {',        cx:'O(1)',  note:'Comparación'},
+    {code:'            tmp = a[j];',             cx:'O(1)',  note:'Intercambio'},
+    {code:'            a[j] = a[j+1];',          cx:'O(1)',  note:'Intercambio'},
+    {code:'            a[j+1] = tmp;',           cx:'O(1)',  note:'Intercambio'},
+    {code:'        }',                            cx:null,    note:null},
+    {code:'    }',                                cx:null,    note:null},
+    {code:'}',                                    cx:null,    note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'El bucle externo hace n-1 iteraciones, el interno hace n-1, n-2, ... 1 → suma = n(n-1)/2 ≈ O(n²). Es el peor caso del Bubble Sort.'
+},
+{
+  id:11, level:'med', pts:1,
+  title:'Potencia de 2 en while',
+  desc:'Incremento multiplicativo del contador.',
+  lines:[
+    {code:'i = 1;',              cx:'O(1)',     note:'Inicialización'},
+    {code:'while (i < n) {',    cx:'O(log n)', note:'i se dobla cada vez → log₂n iteraciones'},
+    {code:'    sum++;',          cx:'O(1)',     note:'Operación'},
+    {code:'    i = i * 2;',     cx:'O(1)',     note:'Multiplicación por 2'},
+    {code:'}',                   cx:null,       note:null},
+  ],
+  answer:'O(log n)',
+  explanation:'i toma los valores 1, 2, 4, 8, ... 2^k. Para k: 2^k < n → k < log₂n. El bucle se ejecuta ⌈log₂n⌉ veces. O(log n).'
+},
+{
+  id:12, level:'med', pts:1,
+  title:'Selection Sort',
+  desc:'Algoritmo de selección directa.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {',         cx:'O(n)', note:'n iteraciones'},
+    {code:'    min_idx = i;',                   cx:'O(1)', note:'Asignación'},
+    {code:'    for (j = i+1; j < n; j++) {',   cx:'O(n)', note:'En promedio n/2 → O(n)'},
+    {code:'        if (a[j] < a[min_idx])',    cx:'O(1)', note:'Comparación'},
+    {code:'            min_idx = j;',           cx:'O(1)', note:'Actualización'},
+    {code:'    }',                              cx:null,   note:null},
+    {code:'    swap(a[i], a[min_idx]);',        cx:'O(1)', note:'Intercambio'},
+    {code:'}',                                  cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Bucles anidados: externo n iteraciones, interno n-i iteraciones en cada paso → ∑(n-i) de i=0 a n = n(n-1)/2 = O(n²).'
+},
+{
+  id:13, level:'med', pts:1,
+  title:'Halving desde n',
+  desc:'Un while que resta la mitad a i en cada paso.',
+  lines:[
+    {code:'i = n;',               cx:'O(1)',     note:'Inicialización'},
+    {code:'while (i > 1) {',     cx:'O(log n)', note:'Reduce a la mitad'},
+    {code:'    sum += i;',        cx:'O(1)',     note:'Suma'},
+    {code:'    i = i / 2;',      cx:'O(1)',     note:'División'},
+    {code:'}',                    cx:null,       note:null},
+  ],
+  answer:'O(log n)',
+  explanation:'i = n, n/2, n/4, ... hasta 1. Número de pasos = log₂n. Cada paso es O(1). Total: O(log n).'
+},
+{
+  id:14, level:'med', pts:1,
+  title:'Suma triangular',
+  desc:'Bucle interno de 1 a i.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',  cx:'O(n)', note:'Bucle externo'},
+    {code:'    for (j = 1; j <= i; j++)',cx:'O(n)', note:'En media i/2 → aún O(n) en cada paso'},
+    {code:'        sum++;',              cx:'O(1)', note:'Incremento'},
+    {code:'}',                           cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Suma de 1+2+3+...+n = n(n+1)/2. Aunque el bucle interno va de 1 a i, la suma total de iteraciones es O(n²).'
+},
+{
+  id:15, level:'med', pts:1,
+  title:'Tres bucles secuenciales',
+  desc:'Tres bucles independientes de distinto tamaño.',
+  lines:[
+    {code:'for (i=0; i<n; i++) a[i]=0;',        cx:'O(n)',   note:'Primer bucle: n'},
+    {code:'for (i=0; i<n*n; i++) b[i]=0;',      cx:'O(n²)',  note:'Segundo bucle: n²'},
+    {code:'for (i=0; i<n*n*n; i++) c[i]=0;',    cx:'O(n³)',  note:'Tercer bucle: n³'},
+  ],
+  answer:'O(n³)',
+  explanation:'T(n) = O(n) + O(n²) + O(n³). En notación asintótica domina el término de mayor grado: O(n³).'
+},
+{
+  id:16, level:'med', pts:1,
+  title:'Insertion Sort',
+  desc:'Algoritmo de inserción directa.',
+  lines:[
+    {code:'for (i = 1; i < n; i++) {',         cx:'O(n)', note:'n-1 iteraciones'},
+    {code:'    key = a[i];',                    cx:'O(1)', note:'Guardar valor'},
+    {code:'    j = i - 1;',                    cx:'O(1)', note:'Índice previo'},
+    {code:'    while (j >= 0 && a[j] > key) {',cx:'O(n)', note:'En peor caso i iteraciones'},
+    {code:'        a[j+1] = a[j];',            cx:'O(1)', note:'Desplazamiento'},
+    {code:'        j--;',                       cx:'O(1)', note:'Decrementar'},
+    {code:'    }',                              cx:null,   note:null},
+    {code:'    a[j+1] = key;',                 cx:'O(1)', note:'Insertar'},
+    {code:'}',                                  cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Bucle for: n iteraciones. While interno: en peor caso (array invertido) hace i comparaciones cada vez → suma = n(n-1)/2 = O(n²).'
+},
+{
+  id:17, level:'med', pts:1,
+  title:'Factorial recursivo',
+  desc:'Función recursiva que calcula n!',
+  lines:[
+    {code:'int fact(int n) {',   cx:'O(1)',  note:'Cabecera de función'},
+    {code:'    if (n <= 1)',     cx:'O(1)',  note:'Caso base'},
+    {code:'        return 1;',  cx:'O(1)',  note:'Retorno base'},
+    {code:'    return n * fact(n-1);', cx:'O(n)', note:'Llamada recursiva n veces'},
+    {code:'}',                   cx:null,   note:null},
+  ],
+  answer:'O(n)',
+  explanation:'La recurrencia es T(n) = T(n-1) + O(1). Expandiendo: T(n) = T(n-2) + 2·O(1) = ... = n·O(1) = O(n).'
+},
+{
+  id:18, level:'med', pts:1,
+  title:'Búsqueda lineal',
+  desc:'Búsqueda secuencial en un array.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {', cx:'O(n)', note:'En peor caso recorre todo'},
+    {code:'    if (a[i] == x)',        cx:'O(1)', note:'Comparación'},
+    {code:'        return i;',         cx:'O(1)', note:'Encontrado'},
+    {code:'}',                         cx:null,   note:null},
+    {code:'return -1;',                cx:'O(1)', note:'No encontrado'},
+  ],
+  answer:'O(n)',
+  explanation:'En el peor caso (elemento no encontrado), recorremos los n elementos. Cada iteración es O(1). Total: O(n).'
+},
+{
+  id:19, level:'med', pts:1,
+  title:'Fibonacci iterativo',
+  desc:'Cálculo de Fibonacci con un bucle.',
+  lines:[
+    {code:'a = 0; b = 1;',             cx:'O(1)', note:'Inicialización'},
+    {code:'for (i = 2; i <= n; i++) {',cx:'O(n)', note:'n-1 iteraciones'},
+    {code:'    c = a + b;',            cx:'O(1)', note:'Suma'},
+    {code:'    a = b;',                cx:'O(1)', note:'Desplazamiento'},
+    {code:'    b = c;',                cx:'O(1)', note:'Desplazamiento'},
+    {code:'}',                         cx:null,   note:null},
+  ],
+  answer:'O(n)',
+  explanation:'Un solo bucle de n-1 iteraciones con operaciones O(1) dentro. T(n) = O(1) + O(n)·O(1) = O(n).'
+},
+{
+  id:20, level:'med', pts:1,
+  title:'Invertir array',
+  desc:'Intercambio de elementos desde los extremos al centro.',
+  lines:[
+    {code:'left = 0; right = n-1;',          cx:'O(1)', note:'Inicialización'},
+    {code:'while (left < right) {',           cx:'O(n)', note:'n/2 iteraciones → O(n)'},
+    {code:'    tmp = a[left];',               cx:'O(1)', note:'Swap'},
+    {code:'    a[left] = a[right];',          cx:'O(1)', note:'Swap'},
+    {code:'    a[right] = tmp;',              cx:'O(1)', note:'Swap'},
+    {code:'    left++; right--;',            cx:'O(1)', note:'Avanzar'},
+    {code:'}',                                cx:null,   note:null},
+  ],
+  answer:'O(n)',
+  explanation:'El while hace exactamente n/2 iteraciones. En notación asintótica O(n/2) = O(n). Cada iteración es O(1).'
+},
+
+// ══════════════ DIFÍCILES (21-40) ══════════════
+{
+  id:21, level:'hard', pts:1,
+  title:'Triple bucle anidado cúbico',
+  desc:'Tres bucles for anidados, todos hasta n.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',         cx:'O(n)', note:'n iteraciones'},
+    {code:'    for (j = 1; j <= n; j++) {',     cx:'O(n)', note:'n iteraciones'},
+    {code:'        for (k = 1; k <= n; k++) {', cx:'O(n)', note:'n iteraciones'},
+    {code:'            sum++;',                 cx:'O(1)', note:'Operación'},
+    {code:'        }',                          cx:null,   note:null},
+    {code:'    }',                              cx:null,   note:null},
+    {code:'}',                                  cx:null,   note:null},
+  ],
+  answer:'O(n³)',
+  explanation:'T(n) = O(n) × O(n) × O(n) = O(n³). Tres bucles perfectamente anidados, cada uno de n iteraciones.'
+},
+{
+  id:22, level:'hard', pts:1,
+  title:'Bucle con incremento cuadrado',
+  desc:'El índice del bucle se incrementa en i en cada paso.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',        cx:'O(n)',      note:'Bucle externo'},
+    {code:'    for (j = 1; j <= i*i; j++) {',  cx:'O(n²)',     note:'j va hasta i², que en máximo es n²'},
+    {code:'        sum++;',                    cx:'O(1)',      note:'Operación'},
+    {code:'    }',                             cx:null,        note:null},
+    {code:'}',                                 cx:null,        note:null},
+  ],
+  answer:'O(n³)',
+  explanation:'∑(i² para i=1..n) = n(n+1)(2n+1)/6 ≈ O(n³). El bucle interno hace i² iteraciones, y sumamos de i=1 a n.'
+},
+{
+  id:23, level:'hard', pts:1,
+  title:'Merge Sort (recurrencia)',
+  desc:'Algoritmo de ordenación por mezcla.',
+  lines:[
+    {code:'void mergeSort(a, l, r) {', cx:'O(1)',     note:'Cabecera'},
+    {code:'    if (l >= r) return;',   cx:'O(1)',     note:'Caso base'},
+    {code:'    m = (l+r)/2;',          cx:'O(1)',     note:'Punto medio'},
+    {code:'    mergeSort(a,l,m);',     cx:'O(n log n)',note:'Recurrencia: T(n/2)'},
+    {code:'    mergeSort(a,m+1,r);',   cx:'O(n log n)',note:'Recurrencia: T(n/2)'},
+    {code:'    merge(a,l,m,r);',       cx:'O(n)',     note:'Mezcla lineal'},
+    {code:'}',                         cx:null,       note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'Recurrencia: T(n) = 2T(n/2) + O(n). Por el Teorema Maestro (caso 2): a=2, b=2, f(n)=n → log₂2=1 → T(n)=O(n log n).'
+},
+{
+  id:24, level:'hard', pts:1,
+  title:'Cuadrado de log',
+  desc:'Bucles donde el límite depende de log n.',
+  lines:[
+    {code:'i = n;',                    cx:'O(1)',     note:'Inicialización'},
+    {code:'while (i > 1) {',           cx:'O(log n)', note:'log n iteraciones externas'},
+    {code:'    j = n;',                cx:'O(1)',     note:'Reset'},
+    {code:'    while (j > 1) {',       cx:'O(log n)', note:'log n iteraciones internas'},
+    {code:'        sum++;',            cx:'O(1)',     note:'Operación'},
+    {code:'        j = j / 2;',        cx:'O(1)',     note:'División'},
+    {code:'    }',                     cx:null,       note:null},
+    {code:'    i = i / 2;',            cx:'O(1)',     note:'División'},
+    {code:'}',                         cx:null,       note:null},
+  ],
+  answer:'O(log² n)',
+  explanation:'While externo: O(log n). While interno: O(log n) en cada iteración. Total: O(log n) × O(log n) = O(log² n).'
+},
+{
+  id:25, level:'hard', pts:1,
+  title:'Función recursiva con llamada doble',
+  desc:'Fibonacci recursivo (ineficiente).',
+  lines:[
+    {code:'int fib(int n) {',           cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (n <= 1)',            cx:'O(1)',   note:'Caso base'},
+    {code:'        return n;',         cx:'O(1)',   note:'Retorno'},
+    {code:'    return fib(n-1) + fib(n-2);', cx:'O(2^n)', note:'Dos llamadas recursivas'},
+    {code:'}',                          cx:null,    note:null},
+  ],
+  answer:'O(2^n)',
+  explanation:'Cada llamada genera dos más. El árbol de recursión tiene altura n y ≈2^n nodos. T(n) = T(n-1)+T(n-2)+O(1) ≈ O(φ^n) ≈ O(2^n).'
+},
+{
+  id:26, level:'hard', pts:1,
+  title:'Bucle geométrico con for externo',
+  desc:'For externo normal, while interno que divide por 3.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {',  cx:'O(n)',     note:'n iteraciones'},
+    {code:'    j = 1;',                 cx:'O(1)',     note:'Inicialización'},
+    {code:'    while (j < n) {',        cx:'O(log n)', note:'j se triplica → log₃n'},
+    {code:'        sum++;',             cx:'O(1)',     note:'Operación'},
+    {code:'        j = j * 3;',         cx:'O(1)',     note:'Triplicar'},
+    {code:'    }',                      cx:null,       note:null},
+    {code:'}',                          cx:null,       note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'For: O(n). While: j=1,3,9,...3^k < n → k = log₃n = O(log n). Total: O(n)×O(log n) = O(n log n).'
+},
+{
+  id:27, level:'hard', pts:1,
+  title:'Quick Sort (peor caso)',
+  desc:'Análisis del peor caso de Quick Sort.',
+  lines:[
+    {code:'void quickSort(a, lo, hi) {',     cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (lo >= hi) return;',       cx:'O(1)',   note:'Caso base'},
+    {code:'    pivot = partition(a,lo,hi);', cx:'O(n)',   note:'Partición lineal'},
+    {code:'    quickSort(a, lo, pivot-1);',  cx:'O(n²)',  note:'Peor caso: partición desbalanceada'},
+    {code:'    quickSort(a, pivot+1, hi);',  cx:'O(n²)',  note:'Peor caso: un subarray de n-1'},
+    {code:'}',                               cx:null,     note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Peor caso (array ordenado, pivote siempre mínimo): T(n)=T(n-1)+O(n). Expande a O(n²). Caso medio: O(n log n).'
+},
+{
+  id:28, level:'hard', pts:1,
+  title:'Suma de subsecuencias',
+  desc:'Todos los pares (i,j) con j avanzando de 2 en 2.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',     cx:'O(n)', note:'Bucle externo'},
+    {code:'    for (j = 1; j <= n; j += 2)',cx:'O(n)', note:'n/2 iteraciones → O(n)'},
+    {code:'        sum += a[i] + b[j];',   cx:'O(1)', note:'Suma'},
+    {code:'}',                              cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'Externo: n. Interno: n/2 iteraciones (aunque j+=2, sigue siendo O(n) asintóticamente). Total: O(n)×O(n) = O(n²).'
+},
+{
+  id:29, level:'hard', pts:1,
+  title:'Heapsort',
+  desc:'Algoritmo de ordenación por montículo.',
+  lines:[
+    {code:'buildMaxHeap(a, n);',             cx:'O(n)',     note:'Construcción del heap'},
+    {code:'for (i = n-1; i >= 1; i--) {',   cx:'O(n)',     note:'n-1 iteraciones'},
+    {code:'    swap(a[0], a[i]);',           cx:'O(1)',     note:'Extraer máximo'},
+    {code:'    heapify(a, 0, i);',           cx:'O(log n)', note:'Restaurar heap: O(log n)'},
+    {code:'}',                               cx:null,       note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'buildMaxHeap: O(n). Bucle for: n-1 iteraciones × heapify O(log n) = O(n log n). Total: O(n) + O(n log n) = O(n log n).'
+},
+{
+  id:30, level:'hard', pts:1,
+  title:'Potencias acumuladas',
+  desc:'i empieza en 2 y se eleva al cuadrado en cada paso.',
+  lines:[
+    {code:'i = 2;',              cx:'O(1)',          note:'Inicialización'},
+    {code:'while (i < n) {',    cx:'O(log log n)',   note:'i=2,4,16,256... → log(log n) pasos'},
+    {code:'    sum++;',          cx:'O(1)',           note:'Operación'},
+    {code:'    i = i * i;',     cx:'O(1)',           note:'Cuadrado'},
+    {code:'}',                   cx:null,            note:null},
+  ],
+  answer:'O(log log n)',
+  explanation:'i = 2, 2², 2⁴, 2⁸, ... = 2^(2^k). Para 2^(2^k) ≥ n → 2^k ≥ log₂n → k ≥ log₂(log₂n). Total: O(log log n).'
+},
+{
+  id:31, level:'hard', pts:1,
+  title:'BFS en grafo',
+  desc:'Recorrido en amplitud sobre V vértices y E aristas.',
+  lines:[
+    {code:'queue.push(start);',            cx:'O(1)', note:'Inicializar cola'},
+    {code:'while (!queue.empty()) {',      cx:'O(V)', note:'Cada vértice se procesa una vez'},
+    {code:'    v = queue.front(); queue.pop();', cx:'O(1)', note:'Extraer vértice'},
+    {code:'    for (u : adj[v]) {',        cx:'O(E)', note:'Total de aristas procesadas: E'},
+    {code:'        if (!visited[u]) {',   cx:'O(1)', note:'Check visita'},
+    {code:'            visited[u] = true;',cx:'O(1)', note:'Marcar'},
+    {code:'            queue.push(u);',   cx:'O(1)', note:'Encolar'},
+    {code:'        }',                    cx:null,   note:null},
+    {code:'    }',                         cx:null,   note:null},
+    {code:'}',                             cx:null,   note:null},
+  ],
+  answer:'O(V+E)',
+  explanation:'Cada vértice se añade/saca de la cola una vez: O(V). Cada arista se examina una vez total: O(E). Total: O(V+E).'
+},
+{
+  id:32, level:'hard', pts:1,
+  title:'Torres de Hanói',
+  desc:'Algoritmo recursivo de las Torres de Hanói.',
+  lines:[
+    {code:'void hanoi(int n, char from, char to, char via) {', cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (n == 1) {',                                  cx:'O(1)',   note:'Caso base'},
+    {code:'        move(from, to);',                            cx:'O(1)',   note:'Mover un disco'},
+    {code:'        return;',                                    cx:'O(1)',   note:'Retorno'},
+    {code:'    }',                                              cx:null,    note:null},
+    {code:'    hanoi(n-1, from, via, to);',                    cx:'O(2^n)', note:'Subproblem n-1'},
+    {code:'    move(from, to);',                               cx:'O(1)',   note:'Mover disco n'},
+    {code:'    hanoi(n-1, via, to, from);',                    cx:'O(2^n)', note:'Subproblem n-1'},
+    {code:'}',                                                  cx:null,    note:null},
+  ],
+  answer:'O(2^n)',
+  explanation:'T(n) = 2T(n-1) + O(1). Expandiendo: T(n) = 2^n - 1 = O(2^n). El número mínimo de movimientos es 2^n - 1.'
+},
+{
+  id:33, level:'hard', pts:1,
+  title:'Multiplicación de matrices',
+  desc:'Algoritmo clásico de multiplicación cúbica.',
+  lines:[
+    {code:'for (i = 0; i < n; i++) {',         cx:'O(n)', note:'Filas A'},
+    {code:'    for (j = 0; j < n; j++) {',     cx:'O(n)', note:'Columnas B'},
+    {code:'        C[i][j] = 0;',              cx:'O(1)', note:'Inicializar'},
+    {code:'        for (k = 0; k < n; k++) {', cx:'O(n)', note:'Producto escalar'},
+    {code:'            C[i][j] += A[i][k]*B[k][j];', cx:'O(1)', note:'Multiplicar y acumular'},
+    {code:'        }',                          cx:null,   note:null},
+    {code:'    }',                              cx:null,   note:null},
+    {code:'}',                                  cx:null,   note:null},
+  ],
+  answer:'O(n³)',
+  explanation:'Tres bucles anidados perfectamente, cada uno de n iteraciones. T(n) = O(n)×O(n)×O(n) = O(n³).'
+},
+{
+  id:34, level:'hard', pts:1,
+  title:'Suma de subconjuntos (backtracking)',
+  desc:'Exploración exponencial de subconjuntos.',
+  lines:[
+    {code:'void subsets(int n, int i) {',       cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (i == n) {',                  cx:'O(1)',   note:'Caso base'},
+    {code:'        print(subset);',             cx:'O(n)',   note:'Imprimir subconjunto de tamaño n'},
+    {code:'        return;',                    cx:'O(1)',   note:'Retorno'},
+    {code:'    }',                              cx:null,    note:null},
+    {code:'    subset.add(a[i]);',             cx:'O(1)',   note:'Incluir elemento'},
+    {code:'    subsets(n, i+1);',              cx:'O(2^n)', note:'Rama incluir'},
+    {code:'    subset.remove(a[i]);',          cx:'O(1)',   note:'Excluir elemento'},
+    {code:'    subsets(n, i+1);',              cx:'O(2^n)', note:'Rama excluir'},
+    {code:'}',                                  cx:null,    note:null},
+  ],
+  answer:'O(n·2^n)',
+  explanation:'2^n subconjuntos, cada uno se imprime en O(n). T(n) = 2T(n-1) + O(n) → O(n·2^n). El factor n viene de la impresión.'
+},
+{
+  id:35, level:'hard', pts:1,
+  title:'DFS iterativo',
+  desc:'Búsqueda en profundidad con pila explícita.',
+  lines:[
+    {code:'stack.push(start);',              cx:'O(1)', note:'Inicializar'},
+    {code:'while (!stack.empty()) {',        cx:'O(V)', note:'Cada vértice una vez'},
+    {code:'    v = stack.top(); stack.pop();',cx:'O(1)', note:'Extraer'},
+    {code:'    if (!visited[v]) {',          cx:'O(1)', note:'Chequear'},
+    {code:'        visited[v] = true;',      cx:'O(1)', note:'Marcar'},
+    {code:'        for (u : adj[v]) {',      cx:'O(E)', note:'Total aristas: E'},
+    {code:'            stack.push(u);',      cx:'O(1)', note:'Apilar'},
+    {code:'        }',                       cx:null,   note:null},
+    {code:'    }',                           cx:null,   note:null},
+    {code:'}',                               cx:null,   note:null},
+  ],
+  answer:'O(V+E)',
+  explanation:'Igual que BFS: cada vértice V se procesa una vez y cada arista E se examina una vez. Total: O(V+E).'
+},
+{
+  id:36, level:'hard', pts:1,
+  title:'Recursión con reducción a n/3',
+  desc:'T(n) = 3T(n/3) + O(n). Teorema Maestro.',
+  lines:[
+    {code:'void solve(int n) {',          cx:'O(1)',     note:'Cabecera'},
+    {code:'    if (n <= 1) return;',      cx:'O(1)',     note:'Caso base'},
+    {code:'    for (i=0; i<n; i++) op();',cx:'O(n)',     note:'Trabajo lineal'},
+    {code:'    solve(n/3);',              cx:'O(n log n)',note:'Primera llamada recursiva'},
+    {code:'    solve(n/3);',              cx:'O(n log n)',note:'Segunda llamada'},
+    {code:'    solve(n/3);',              cx:'O(n log n)',note:'Tercera llamada'},
+    {code:'}',                            cx:null,       note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'T(n)=3T(n/3)+O(n). Teorema Maestro: a=3, b=3, f(n)=n. log₃3=1, f(n)=Θ(n^1) → caso 2: T(n)=O(n log n).'
+},
+{
+  id:37, level:'hard', pts:1,
+  title:'Números perfectos',
+  desc:'Para cada número hasta n, verifica si es perfecto.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',      cx:'O(n)', note:'Bucle externo'},
+    {code:'    sum = 1;',                    cx:'O(1)', note:'Inicializar suma de divisores'},
+    {code:'    for (j = 2; j*j <= i; j++) {',cx:'O(√n)',note:'j hasta √i, máximo √n'},
+    {code:'        if (i%j == 0) {',         cx:'O(1)', note:'Es divisor'},
+    {code:'            sum += j;',           cx:'O(1)', note:'Sumar divisor'},
+    {code:'            if (j != i/j) sum += i/j;', cx:'O(1)', note:'Divisor par'},
+    {code:'        }',                       cx:null,   note:null},
+    {code:'    }',                           cx:null,   note:null},
+    {code:'    if (sum == i) print(i);',     cx:'O(1)', note:'¿Perfecto?'},
+    {code:'}',                               cx:null,   note:null},
+  ],
+  answer:'O(n√n)',
+  explanation:'For externo: n. For interno: O(√i) ≤ O(√n). Total: O(n) × O(√n) = O(n^(3/2)) = O(n√n).'
+},
+{
+  id:38, level:'hard', pts:1,
+  title:'Criba de Eratóstenes',
+  desc:'Algoritmo para encontrar primos hasta n.',
+  lines:[
+    {code:'bool sieve[n+1] = {true};',             cx:'O(n)',     note:'Inicializar array'},
+    {code:'for (p = 2; p*p <= n; p++) {',          cx:'O(√n)',    note:'p hasta √n'},
+    {code:'    if (sieve[p]) {',                   cx:'O(1)',     note:'Si es primo'},
+    {code:'        for (i = p*p; i <= n; i += p)',cx:'O(n log log n)', note:'Marcar múltiplos'},
+    {code:'            sieve[i] = false;',         cx:'O(1)',     note:'Tachar'},
+    {code:'    }',                                 cx:null,       note:null},
+    {code:'}',                                     cx:null,       note:null},
+  ],
+  answer:'O(n log log n)',
+  explanation:'El análisis de la criba da ∑(n/p para primos p≤n) ≈ n·∑(1/p) ≈ n·log(log n). Resultado: O(n log log n).'
+},
+{
+  id:39, level:'hard', pts:1,
+  title:'Dijkstra con array simple',
+  desc:'Implementación de Dijkstra sin cola de prioridad.',
+  lines:[
+    {code:'dist[src] = 0;',                          cx:'O(1)', note:'Inicializar origen'},
+    {code:'for (count = 0; count < V-1; count++) {', cx:'O(V)', note:'V-1 iteraciones'},
+    {code:'    u = minDist(dist, visited);',         cx:'O(V)', note:'Buscar mínimo: O(V)'},
+    {code:'    visited[u] = true;',                  cx:'O(1)', note:'Marcar visitado'},
+    {code:'    for (v = 0; v < V; v++) {',           cx:'O(V)', note:'Relajar vecinos'},
+    {code:'        dist[v] = min(dist[v], dist[u]+w(u,v));', cx:'O(1)', note:'Relajación'},
+    {code:'    }',                                   cx:null,   note:null},
+    {code:'}',                                       cx:null,   note:null},
+  ],
+  answer:'O(V²)',
+  explanation:'Bucle externo: V-1. Por cada iteración: minDist O(V) + relajar vecinos O(V) → O(V). Total: O(V)×O(V) = O(V²).'
+},
+{
+  id:40, level:'hard', pts:1,
+  title:'Permutaciones',
+  desc:'Generar todas las permutaciones de n elementos.',
+  lines:[
+    {code:'void permute(a, l, r) {',       cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (l == r) {',             cx:'O(1)',   note:'Caso base'},
+    {code:'        print(a);',             cx:'O(n)',   note:'Imprimir permutación'},
+    {code:'        return;',              cx:'O(1)',   note:'Retorno'},
+    {code:'    }',                         cx:null,    note:null},
+    {code:'    for (i = l; i <= r; i++) {',cx:'O(n)',  note:'n posiciones'},
+    {code:'        swap(a[l], a[i]);',    cx:'O(1)',  note:'Intercambiar'},
+    {code:'        permute(a, l+1, r);',  cx:'O(n!)', note:'(n-1)! llamadas desde aquí'},
+    {code:'        swap(a[l], a[i]);',    cx:'O(1)',  note:'Restaurar'},
+    {code:'    }',                         cx:null,   note:null},
+    {code:'}',                             cx:null,   note:null},
+  ],
+  answer:'O(n·n!)',
+  explanation:'n! permutaciones, cada una impresa en O(n). T(n)=n·T(n-1)+O(n) → O(n·n!). Para n=10 ya son >3 millones de operaciones.'
+},
+
+// ══════════════ MUY DIFÍCILES (41-60) ══════════════
+{
+  id:41, level:'vhard', pts:1.5,
+  title:'Anidado con doble logaritmo',
+  desc:'Bucle externo cuadrático, interno logarítmico.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',    cx:'O(n)',     note:'n iteraciones'},
+    {code:'    for (j = 1; j <= n; j++) {',cx:'O(n)',     note:'n iteraciones'},
+    {code:'        k = j;',                cx:'O(1)',     note:'Inicializar'},
+    {code:'        while (k > 1) {',       cx:'O(log n)', note:'k se divide → O(log j) ≤ O(log n)'},
+    {code:'            sum++;',            cx:'O(1)',     note:'Operación'},
+    {code:'            k = k / 2;',        cx:'O(1)',     note:'Dividir'},
+    {code:'        }',                     cx:null,       note:null},
+    {code:'    }',                         cx:null,       note:null},
+    {code:'}',                             cx:null,       note:null},
+  ],
+  answer:'O(n² log n)',
+  explanation:'For i: O(n). For j: O(n). While k: O(log j) ≤ O(log n). Total: O(n)×O(n)×O(log n) = O(n² log n).'
+},
+{
+  id:42, level:'vhard', pts:1.5,
+  title:'Dijkstra con heap binario',
+  desc:'Implementación eficiente con cola de prioridad.',
+  lines:[
+    {code:'pq.push({0, src});',            cx:'O(1)',          note:'Insertar origen'},
+    {code:'while (!pq.empty()) {',         cx:'O(V)',          note:'A lo sumo V+E inserciones'},
+    {code:'    u = pq.top().v; pq.pop();', cx:'O(log(V+E))',   note:'Extraer mínimo del heap'},
+    {code:'    if (visited[u]) continue;', cx:'O(1)',          note:'Evitar duplicados'},
+    {code:'    visited[u] = true;',        cx:'O(1)',          note:'Marcar'},
+    {code:'    for ({v,w} : adj[u]) {',    cx:'O(E)',          note:'Total aristas procesadas'},
+    {code:'        if (dist[u]+w < dist[v]) {', cx:'O(1)',     note:'Mejor camino'},
+    {code:'            dist[v] = dist[u]+w;',   cx:'O(1)',     note:'Relajar'},
+    {code:'            pq.push({dist[v],v});',  cx:'O(log E)', note:'Insertar en heap'},
+    {code:'        }',                          cx:null,       note:null},
+    {code:'    }',                              cx:null,       note:null},
+    {code:'}',                                  cx:null,       note:null},
+  ],
+  answer:'O((V+E) log V)',
+  explanation:'Cada arista puede provocar una inserción en el heap (O(log V)). Total aristas: E. Extracciones: V. T = O((V+E)·log V).'
+},
+{
+  id:43, level:'vhard', pts:1.5,
+  title:'Programación dinámica 2D',
+  desc:'Tabla DP con dependencias bidireccionales.',
+  lines:[
+    {code:'for (i = 0; i <= n; i++) dp[i][0]=dp[0][i]=0;', cx:'O(n)', note:'Inicialización filas/columnas'},
+    {code:'for (i = 1; i <= n; i++) {',                     cx:'O(n)', note:'Primera dimensión'},
+    {code:'    for (j = 1; j <= m; j++) {',                 cx:'O(m)', note:'Segunda dimensión'},
+    {code:'        if (a[i] == b[j])',                      cx:'O(1)', note:'Comparar caracteres'},
+    {code:'            dp[i][j] = dp[i-1][j-1] + 1;',      cx:'O(1)', note:'Coincidencia'},
+    {code:'        else',                                   cx:null,   note:null},
+    {code:'            dp[i][j] = max(dp[i-1][j], dp[i][j-1]);', cx:'O(1)', note:'Sin coincidencia'},
+    {code:'    }',                                          cx:null,   note:null},
+    {code:'}',                                              cx:null,   note:null},
+  ],
+  answer:'O(n·m)',
+  explanation:'LCS (Longest Common Subsequence): rellena tabla n×m. T(n,m) = O(n·m). Si n=m entonces O(n²).'
+},
+{
+  id:44, level:'vhard', pts:1.5,
+  title:'Recursión T(n) = 4T(n/2) + O(n²)',
+  desc:'Aplica el Teorema Maestro correctamente.',
+  lines:[
+    {code:'void solve(int n) {',              cx:'O(1)',  note:'Cabecera'},
+    {code:'    if (n <= 1) { op(); return; }',cx:'O(1)',  note:'Caso base'},
+    {code:'    for(i=0;i<n;i++) for(j=0;j<n;j++) work();', cx:'O(n²)', note:'Trabajo cuadrático'},
+    {code:'    solve(n/2); solve(n/2);',      cx:'O(n²)', note:'Dos llamadas con n/2 (×2)'},
+    {code:'    solve(n/2); solve(n/2);',      cx:'O(n²)', note:'Dos llamadas más (4 total)'},
+    {code:'}',                                cx:null,   note:null},
+  ],
+  answer:'O(n² log n)',
+  explanation:'T(n)=4T(n/2)+O(n²). Maestro: a=4, b=2, f(n)=n². log₂4=2. f(n)=Θ(n^log₂4)=Θ(n²) → caso 2: T(n)=O(n² log n).'
+},
+{
+  id:45, level:'vhard', pts:1.5,
+  title:'Algoritmo de Prim con heap',
+  desc:'MST de Prim con cola de prioridad.',
+  lines:[
+    {code:'key[src]=0; pq.push({0,src});',    cx:'O(1)',         note:'Inicializar'},
+    {code:'while (!pq.empty()) {',             cx:'O(V)',         note:'V vértices procesados'},
+    {code:'    u = pq.top().v; pq.pop();',    cx:'O(log V)',     note:'Extraer mínimo'},
+    {code:'    inMST[u] = true;',             cx:'O(1)',         note:'Añadir al MST'},
+    {code:'    for ({v,w} : adj[u]) {',       cx:'O(E)',         note:'Total aristas'},
+    {code:'        if (!inMST[v] && w<key[v]){',cx:'O(1)',       note:'Mejor clave'},
+    {code:'            key[v] = w;',          cx:'O(1)',         note:'Actualizar'},
+    {code:'            pq.push({w,v});',      cx:'O(log V)',     note:'Insertar'},
+    {code:'        }',                        cx:null,           note:null},
+    {code:'    }',                            cx:null,           note:null},
+    {code:'}',                                cx:null,           note:null},
+  ],
+  answer:'O((V+E) log V)',
+  explanation:'Similar a Dijkstra. V extracciones del heap: O(V log V). E actualizaciones/inserciones: O(E log V). Total: O((V+E) log V).'
+},
+{
+  id:46, level:'vhard', pts:1.5,
+  title:'Floyd-Warshall',
+  desc:'Caminos mínimos entre todos los pares de vértices.',
+  lines:[
+    {code:'for(i=0;i<V;i++) for(j=0;j<V;j++) dist[i][j]=(i==j)?0:INF;', cx:'O(V²)', note:'Inicializar'},
+    {code:'for (k = 0; k < V; k++) {',    cx:'O(V)', note:'Vértice intermedio'},
+    {code:'    for (i = 0; i < V; i++) {',cx:'O(V)', note:'Origen'},
+    {code:'        for (j = 0; j < V; j++) {',cx:'O(V)', note:'Destino'},
+    {code:'            dist[i][j] = min(dist[i][j], dist[i][k]+dist[k][j]);', cx:'O(1)', note:'Relajar'},
+    {code:'        }',                    cx:null,   note:null},
+    {code:'    }',                        cx:null,   note:null},
+    {code:'}',                            cx:null,   note:null},
+  ],
+  answer:'O(V³)',
+  explanation:'Tres bucles anidados sobre V vértices. T(n) = O(V³). Encuentra los caminos mínimos entre todos los pares de vértices.'
+},
+{
+  id:47, level:'vhard', pts:1.5,
+  title:'Kruskal con Union-Find',
+  desc:'MST de Kruskal con estructura Union-Find.',
+  lines:[
+    {code:'sort(edges);',                  cx:'O(E log E)', note:'Ordenar aristas'},
+    {code:'for (e : edges) {',             cx:'O(E)',       note:'Recorrer aristas'},
+    {code:'    u = find(e.u);',            cx:'O(α(V))',    note:'Find casi O(1) con compresión'},
+    {code:'    v = find(e.v);',            cx:'O(α(V))',    note:'Find casi O(1)'},
+    {code:'    if (u != v) {',             cx:'O(1)',       note:'Ciclo check'},
+    {code:'        mst.add(e);',           cx:'O(1)',       note:'Añadir al MST'},
+    {code:'        union(u, v);',          cx:'O(α(V))',    note:'Unir componentes'},
+    {code:'    }',                         cx:null,         note:null},
+    {code:'}',                             cx:null,         note:null},
+  ],
+  answer:'O(E log E)',
+  explanation:'El paso dominante es la ordenación: O(E log E). Las operaciones Union-Find son casi O(1) amortizadas (α(V) es la inversa de Ackermann). Total: O(E log E).'
+},
+{
+  id:48, level:'vhard', pts:1.5,
+  title:'Recurrencia T(n) = T(n-1) + O(n)',
+  desc:'Problema con eliminación de un elemento y trabajo lineal.',
+  lines:[
+    {code:'void alg(int n) {',             cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (n == 0) return;',       cx:'O(1)',   note:'Base'},
+    {code:'    for (i = 0; i < n; i++) work();', cx:'O(n)', note:'Trabajo O(n)'},
+    {code:'    alg(n-1);',                 cx:'O(n²)', note:'T(n-1): expansión da O(n²)'},
+    {code:'}',                             cx:null,    note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'T(n)=T(n-1)+O(n). Expandiendo: T(n) = n + (n-1) + ... + 1 = n(n+1)/2 = O(n²).'
+},
+{
+  id:49, level:'vhard', pts:1.5,
+  title:'Problema de la mochila 0/1',
+  desc:'DP para la mochila con n objetos y capacidad W.',
+  lines:[
+    {code:'for (i=0;i<=n;i++) dp[i][0]=0;',    cx:'O(n)', note:'Caso base'},
+    {code:'for (w=0;w<=W;w++) dp[0][w]=0;',    cx:'O(W)', note:'Caso base'},
+    {code:'for (i = 1; i <= n; i++) {',         cx:'O(n)', note:'Para cada objeto'},
+    {code:'    for (w = 1; w <= W; w++) {',     cx:'O(W)', note:'Para cada capacidad'},
+    {code:'        if (wt[i] <= w)',            cx:'O(1)', note:'Cabe el objeto'},
+    {code:'            dp[i][w] = max(val[i]+dp[i-1][w-wt[i]], dp[i-1][w]);', cx:'O(1)', note:'Incluir o excluir'},
+    {code:'        else dp[i][w] = dp[i-1][w];',cx:'O(1)', note:'No cabe'},
+    {code:'    }',                              cx:null,   note:null},
+    {code:'}',                                  cx:null,   note:null},
+  ],
+  answer:'O(n·W)',
+  explanation:'Tabla DP de tamaño n×W. Cada celda se calcula en O(1). Total: O(n·W). No es polinomial porque W puede ser exponencial en bits.'
+},
+{
+  id:50, level:'vhard', pts:1.5,
+  title:'N-Reinas (backtracking)',
+  desc:'Colocar N reinas en tablero N×N sin que se ataquen.',
+  lines:[
+    {code:'void queens(int row, int n) {',     cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (row == n) { print(); return; }', cx:'O(n)', note:'Solución: imprimir'},
+    {code:'    for (col = 0; col < n; col++) {', cx:'O(n)', note:'Probar cada columna'},
+    {code:'        if (isSafe(row,col)) {',   cx:'O(n)',   note:'Verificar conflictos'},
+    {code:'            place(row, col);',     cx:'O(1)',   note:'Colocar reina'},
+    {code:'            queens(row+1, n);',   cx:'O(n!)',  note:'Siguiente fila'},
+    {code:'            remove(row, col);',   cx:'O(1)',   note:'Backtrack'},
+    {code:'        }',                        cx:null,    note:null},
+    {code:'    }',                            cx:null,   note:null},
+    {code:'}',                                cx:null,   note:null},
+  ],
+  answer:'O(n!)',
+  explanation:'En el peor caso se exploran n × (n-1) × (n-2) × ... permutaciones de columnas → O(n!). Con podas es menor pero en el peor caso es O(n!).'
+},
+{
+  id:51, level:'vhard', pts:1.5,
+  title:'Recurrencia con tres subproblemas de n/2',
+  desc:'T(n) = 3T(n/2) + O(n²). Teorema Maestro caso 3.',
+  lines:[
+    {code:'void solve(int n) {',               cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (n <= 1) return;',           cx:'O(1)',   note:'Base'},
+    {code:'    for(i=0;i<n;i++) for(j=0;j<n;j++) op();', cx:'O(n²)', note:'Trabajo cuadrático'},
+    {code:'    solve(n/2);',                   cx:'O(n²)', note:'Primera rama (×3 total)'},
+    {code:'    solve(n/2);',                   cx:'O(n²)', note:'Segunda rama'},
+    {code:'    solve(n/2);',                   cx:'O(n²)', note:'Tercera rama'},
+    {code:'}',                                 cx:null,   note:null},
+  ],
+  answer:'O(n²)',
+  explanation:'T(n)=3T(n/2)+O(n²). Maestro: a=3, b=2, f(n)=n². log₂3≈1.58. n²=Ω(n^1.58+ε) → caso 3. T(n)=Θ(n²).'
+},
+{
+  id:52, level:'vhard', pts:1.5,
+  title:'Shell Sort',
+  desc:'Ordenación por incrementos decrecientes.',
+  lines:[
+    {code:'gap = n/2;',                        cx:'O(1)',     note:'Inicializar intervalo'},
+    {code:'while (gap > 0) {',                 cx:'O(log n)', note:'O(log n) valores de gap'},
+    {code:'    for (i = gap; i < n; i++) {',   cx:'O(n)',     note:'n iteraciones'},
+    {code:'        tmp = a[i];',               cx:'O(1)',     note:'Guardar'},
+    {code:'        j = i;',                    cx:'O(1)',     note:'Inicializar'},
+    {code:'        while (j>=gap && a[j-gap]>tmp) {', cx:'O(n)', note:'En peor caso O(n/gap) pasos'},
+    {code:'            a[j] = a[j-gap];',      cx:'O(1)',     note:'Desplazar'},
+    {code:'            j -= gap;',             cx:'O(1)',     note:'Retroceder'},
+    {code:'        }',                         cx:null,       note:null},
+    {code:'        a[j] = tmp;',               cx:'O(1)',     note:'Insertar'},
+    {code:'    }',                             cx:null,       note:null},
+    {code:'    gap = gap/2;',                  cx:'O(1)',     note:'Reducir intervalo'},
+    {code:'}',                                 cx:null,       note:null},
+  ],
+  answer:'O(n² log n)',
+  explanation:'Con secuencia de Knuth: O(n^(3/2)). Con gap n/2: O(n² log n) en el análisis más común. La complejidad exacta depende de la secuencia de gaps.'
+},
+{
+  id:53, level:'vhard', pts:1.5,
+  title:'Recurrencia de Karatsuba',
+  desc:'T(n) = 3T(n/2) + O(n). Multiplicación rápida.',
+  lines:[
+    {code:'int karatsuba(int x, int y, int n) {', cx:'O(1)', note:'Cabecera'},
+    {code:'    if (n == 1) return x*y;',          cx:'O(1)', note:'Base'},
+    {code:'    a=x>>n/2; b=x&mask; c=y>>n/2; d=y&mask;', cx:'O(n)', note:'Dividir: O(n) bits'},
+    {code:'    ac = karatsuba(a,c,n/2);',         cx:'O(n^log₂3)', note:'T(n/2)'},
+    {code:'    bd = karatsuba(b,d,n/2);',         cx:'O(n^log₂3)', note:'T(n/2)'},
+    {code:'    abcd = karatsuba(a+b,c+d,n/2);',  cx:'O(n^log₂3)', note:'T(n/2)'},
+    {code:'    return ac<<n | (abcd-ac-bd)<<n/2 | bd;', cx:'O(n)', note:'Combinar: O(n)'},
+    {code:'}',                                    cx:null, note:null},
+  ],
+  answer:'O(n^1.585)',
+  explanation:'T(n)=3T(n/2)+O(n). Maestro: log₂3≈1.585 > 1. n^log₂3=Ω(n) → caso 1: T(n)=O(n^log₂3)≈O(n^1.585). Mejor que O(n²) clásico.'
+},
+{
+  id:54, level:'vhard', pts:1.5,
+  title:'Suma de subarray máxima (Kadane mejorado)',
+  desc:'Extensión de Kadane con seguimiento de índices.',
+  lines:[
+    {code:'maxSum = a[0]; curSum = a[0];',        cx:'O(1)', note:'Inicializar'},
+    {code:'start = end = tmpStart = 0;',          cx:'O(1)', note:'Índices'},
+    {code:'for (i = 1; i < n; i++) {',            cx:'O(n)', note:'n-1 iteraciones'},
+    {code:'    if (curSum + a[i] < a[i]) {',      cx:'O(1)', note:'Reiniciar'},
+    {code:'        curSum = a[i];',               cx:'O(1)', note:'Nueva suma'},
+    {code:'        tmpStart = i;',               cx:'O(1)', note:'Nuevo inicio'},
+    {code:'    } else {',                         cx:null,   note:null},
+    {code:'        curSum += a[i];',              cx:'O(1)', note:'Extender'},
+    {code:'    }',                                cx:null,   note:null},
+    {code:'    if (curSum > maxSum) { maxSum=curSum; start=tmpStart; end=i; }', cx:'O(1)', note:'Actualizar máximo'},
+    {code:'}',                                    cx:null,   note:null},
+  ],
+  answer:'O(n)',
+  explanation:'Un único recorrido lineal. Cada elemento se visita exactamente una vez con operaciones O(1). T(n) = O(n).'
+},
+{
+  id:55, level:'vhard', pts:1.5,
+  title:'Árbol AVL — rotaciones e inserciones',
+  desc:'Inserción en árbol AVL con n nodos.',
+  lines:[
+    {code:'Node* insert(Node* root, int key) {', cx:'O(1)',     note:'Cabecera'},
+    {code:'    if (!root) return newNode(key);', cx:'O(1)',     note:'Base: nodo vacío'},
+    {code:'    if (key < root->val)',           cx:'O(1)',     note:'Comparar'},
+    {code:'        root->left = insert(root->left, key);', cx:'O(log n)', note:'Bajar por el árbol'},
+    {code:'    else',                           cx:null,       note:null},
+    {code:'        root->right = insert(root->right, key);', cx:'O(log n)', note:'Bajar por el árbol'},
+    {code:'    updateHeight(root);',            cx:'O(1)',     note:'Actualizar altura'},
+    {code:'    return balance(root);',          cx:'O(1)',     note:'Rotar si desbalanceado'},
+    {code:'}',                                  cx:null,       note:null},
+  ],
+  answer:'O(log n)',
+  explanation:'El árbol AVL está balanceado → altura O(log n). La inserción baja un único camino raíz-hoja de longitud O(log n). Rotaciones: O(1). Total: O(log n).'
+},
+{
+  id:56, level:'vhard', pts:1.5,
+  title:'Recurrencia no uniforme',
+  desc:'T(n) = T(n/3) + T(2n/3) + O(n)',
+  lines:[
+    {code:'void solve(a, lo, hi) {',            cx:'O(1)',     note:'Cabecera'},
+    {code:'    if (lo >= hi) return;',          cx:'O(1)',     note:'Base'},
+    {code:'    for (i=lo; i<hi; i++) work();', cx:'O(n)',     note:'Trabajo lineal'},
+    {code:'    mid = lo + (hi-lo)/3;',         cx:'O(1)',     note:'Punto a 1/3'},
+    {code:'    solve(a, lo, mid);',            cx:'O(n log n)', note:'Subproblema n/3'},
+    {code:'    solve(a, mid, hi);',            cx:'O(n log n)', note:'Subproblema 2n/3'},
+    {code:'}',                                  cx:null,       note:null},
+  ],
+  answer:'O(n log n)',
+  explanation:'T(n)=T(n/3)+T(2n/3)+O(n). El árbol de recursión tiene altura log_{3/2}n = O(log n). Cada nivel hace O(n) trabajo total. T(n)=O(n log n).'
+},
+{
+  id:57, level:'vhard', pts:1.5,
+  title:'Backtracking con poda fuerte',
+  desc:'Búsqueda con ramificación variable según nivel.',
+  lines:[
+    {code:'void search(int level, int n) {',     cx:'O(1)',   note:'Cabecera'},
+    {code:'    if (level == n) { record(); return; }', cx:'O(1)', note:'Base'},
+    {code:'    for (i = 0; i < n-level; i++) {', cx:'O(n)',  note:'n-level ramas (decrece)'},
+    {code:'        if (pruned(i)) continue;',   cx:'O(1)',   note:'Poda'},
+    {code:'        choose(i);',                 cx:'O(1)',   note:'Elegir'},
+    {code:'        search(level+1, n);',        cx:'O(n!)',  note:'Sin poda: peor caso factorial'},
+    {code:'        unchoose(i);',               cx:'O(1)',   note:'Deshacer'},
+    {code:'    }',                              cx:null,     note:null},
+    {code:'}',                                  cx:null,     note:null},
+  ],
+  answer:'O(n!)',
+  explanation:'Sin poda efectiva: n × (n-1) × ... × 1 = n! estados. Con poda el promedio puede ser mucho menor, pero el peor caso sigue siendo O(n!).'
+},
+{
+  id:58, level:'vhard', pts:1.5,
+  title:'Bellman-Ford',
+  desc:'Caminos mínimos con detección de ciclos negativos.',
+  lines:[
+    {code:'dist[src]=0; // demás: INF',          cx:'O(V)',   note:'Inicializar distancias'},
+    {code:'for (i = 1; i <= V-1; i++) {',        cx:'O(V)',   note:'V-1 iteraciones'},
+    {code:'    for ({u,v,w} : edges) {',          cx:'O(E)',   note:'Recorrer todas las aristas'},
+    {code:'        if (dist[u]+w < dist[v]) {',  cx:'O(1)',   note:'Relajar'},
+    {code:'            dist[v] = dist[u]+w;',    cx:'O(1)',   note:'Actualizar'},
+    {code:'        }',                           cx:null,     note:null},
+    {code:'    }',                               cx:null,     note:null},
+    {code:'}',                                   cx:null,     note:null},
+    {code:'// Detección ciclos negativos',        cx:null,     note:null},
+    {code:'for ({u,v,w} : edges) {',             cx:'O(E)',   note:'Una pasada más'},
+    {code:'    if (dist[u]+w < dist[v]) alert("ciclo negativo");', cx:'O(1)', note:'Detectar'},
+    {code:'}',                                   cx:null,     note:null},
+  ],
+  answer:'O(V·E)',
+  explanation:'Dos bucles anidados: V-1 iteraciones externas × E aristas. T = O(V·E). Para grafos densos con E=O(V²): O(V³).'
+},
+{
+  id:59, level:'vhard', pts:1.5,
+  title:'Raíz cuadrada compuesta',
+  desc:'Tres niveles, el más interno basado en √n.',
+  lines:[
+    {code:'for (i = 1; i <= n; i++) {',      cx:'O(n)',  note:'n iteraciones'},
+    {code:'    for (j = 1; j <= n; j++) {',  cx:'O(n)',  note:'n iteraciones'},
+    {code:'        k = j;',                  cx:'O(1)',  note:'Asignar'},
+    {code:'        while (k*k <= j) {',      cx:'O(√n)', note:'k hasta √j ≤ √n'},
+    {code:'            sum++;',              cx:'O(1)',  note:'Operación'},
+    {code:'            k++;',                cx:'O(1)',  note:'Incrementar'},
+    {code:'        }',                       cx:null,    note:null},
+    {code:'    }',                           cx:null,    note:null},
+    {code:'}',                               cx:null,    note:null},
+  ],
+  answer:'O(n²√n)',
+  explanation:'For i: O(n). For j: O(n). While k: O(√j) ≤ O(√n). Total: O(n) × O(n) × O(√n) = O(n²√n) = O(n^(5/2)).'
+},
+{
+  id:60, level:'vhard', pts:1.5,
+  title:'Recurrencia T(n) = 2T(√n) + O(log n)',
+  desc:'Recurrencia con raíz cuadrada. Análisis avanzado.',
+  lines:[
+    {code:'void alg(int n) {',              cx:'O(1)',          note:'Cabecera'},
+    {code:'    if (n <= 2) return;',        cx:'O(1)',          note:'Base'},
+    {code:'    for(i=2;i<=n;i*=2) op();', cx:'O(log n)',      note:'log n iteraciones'},
+    {code:'    alg((int)sqrt(n));',         cx:'O(log log n)', note:'T(√n): se reduce a log log n niveles'},
+    {code:'    alg((int)sqrt(n));',         cx:'O(log log n)', note:'Segunda llamada'},
+    {code:'}',                              cx:null,            note:null},
+  ],
+  answer:'O(log n · log log n)',
+  explanation:'T(n)=2T(√n)+O(log n). Cambio m=log n → T(2^m)=2T(2^(m/2))+O(m). Sea S(m)=T(2^m): S(m)=2S(m/2)+O(m) → S(m)=O(m log m). T(n)=O(log n · log log n).'
+},
+];
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+const state = {
+  current: null,
+  results: {},    // id → {answers: {...lineIdx: token}, revealed: bool, checked: bool, correct: bool}
+  openDropdown: null,
+};
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function getLevelInfo(lvl) {
+  const map = {
+    easy:  { label:'Muy fácil',  cls:'badge-easy',  color:'var(--green)'  },
+    med:   { label:'Intermedio', cls:'badge-med',   color:'var(--yellow)' },
+    hard:  { label:'Difícil',    cls:'badge-hard',  color:'var(--red)'    },
+    vhard: { label:'Muy difícil',cls:'badge-vhard', color:'var(--purple)' },
+  };
+  return map[lvl];
+}
+
+function getStats() {
+  let ok=0, total=0;
+  Object.values(state.results).forEach(r => {
+    if (r.checked || r.revealed) {
+      total++;
+      if (r.correct) ok++;
+    }
+  });
+  return {ok, total, pct: total ? Math.round(ok/total*100) : 0};
+}
+
+function updateStats() {
+  const s = getStats();
+  document.getElementById('st-ok').textContent = s.ok;
+  document.getElementById('st-total').textContent = s.total;
+  document.getElementById('st-pct').textContent = s.pct+'%';
+}
+
+// ─────────────────────────────────────────
+// SIDEBAR
+// ─────────────────────────────────────────
+function buildSidebar() {
+  const aside = document.getElementById('sidebar');
+  const levels = [
+    { key:'easy',  label:'Muy Fáciles',  ids: EXERCISES.filter(e=>e.level==='easy').map(e=>e.id)  },
+    { key:'med',   label:'Intermedios',  ids: EXERCISES.filter(e=>e.level==='med').map(e=>e.id)   },
+    { key:'hard',  label:'Difíciles',    ids: EXERCISES.filter(e=>e.level==='hard').map(e=>e.id)  },
+    { key:'vhard', label:'Muy Difíciles',ids: EXERCISES.filter(e=>e.level==='vhard').map(e=>e.id) },
+  ];
+  let html = '';
+  levels.forEach(({key, label, ids}) => {
+    const info = getLevelInfo(key);
+    html += `<div class="sidebar-section">
+      <div class="sidebar-title"><span class="level-badge ${info.cls}">${label}</span></div>`;
+    ids.forEach(id => {
+      const ex = EXERCISES.find(e=>e.id===id);
+      html += `<button class="ex-btn" id="btn-ex-${id}" onclick="loadExercise(${id})">
+        <span style="font-size:.7rem;color:var(--muted)">#${String(id).padStart(2,'0')}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.title}</span>
+      </button>`;
+    });
+    html += '</div>';
+  });
+  aside.innerHTML = html;
+}
+
+function updateSidebarBtn(id) {
+  const btn = document.getElementById(`btn-ex-${id}`);
+  if (!btn) return;
+  btn.className = 'ex-btn';
+  if (id === state.current) btn.classList.add('active');
+  const r = state.results[id];
+  if (r) {
+    if (r.revealed) btn.classList.add('revealed');
+    else if (r.checked && r.correct) btn.classList.add('done-ok');
+    else if (r.checked && !r.correct) btn.classList.add('done-fail');
+  }
+}
+
+// ─────────────────────────────────────────
+// SYNTAX HIGHLIGHT (simple)
+// ─────────────────────────────────────────
+function highlight(code) {
+  const keywords = ['for','while','if','else','return','int','void','bool','char','true','false','continue','do','break'];
+  let h = code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // comments
+  h = h.replace(/(\/\/[^\n]*)/g,'<span class="cmt">$1</span>');
+  // strings
+  h = h.replace(/(".*?")/g,'<span class="cmt">$1</span>');
+  // numbers (standalone)
+  h = h.replace(/\b(\d+)\b/g,'<span class="num">$1</span>');
+  // keywords
+  keywords.forEach(kw => {
+    h = h.replace(new RegExp(`\\b(${kw})\\b`,'g'),'<span class="kw">$1</span>');
+  });
+  return h;
+}
+
+// ─────────────────────────────────────────
+// LOAD EXERCISE
+// ─────────────────────────────────────────
+function loadExercise(id) {
+  // close any open dropdown
+  closeAllDropdowns();
+
+  const prev = state.current;
+  state.current = id;
+  if (prev) updateSidebarBtn(prev);
+  updateSidebarBtn(id);
+
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('exercise-view').style.display = 'block';
+
+  if (!state.results[id]) {
+    state.results[id] = { answers: {}, revealed: false, checked: false, correct: false };
+  }
+
+  renderExercise(id);
+}
+
+function renderExercise(id) {
+  const ex = EXERCISES.find(e=>e.id===id);
+  const r = state.results[id];
+  const info = getLevelInfo(ex.level);
+  const answerable = ex.lines.filter(l => l.cx !== null);
+  const answered = Object.keys(r.answers).length;
+  const pctDone = answerable.length ? Math.round(answered/answerable.length*100) : 0;
+
+  let html = `
+  <div class="ex-header">
+    <div class="ex-meta">
+      <span class="ex-num">Ejercicio #${String(ex.id).padStart(2,'0')}</span>
+      <span class="level-badge ${info.cls}">${info.label}</span>
+      <span class="ex-pts">${ex.pts} punto${ex.pts!==1?'s':''}</span>
+    </div>
+    <div class="ex-title">${ex.title}</div>
+    <div class="ex-desc">${ex.desc}</div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" style="width:${pctDone}%"></div></div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span>Análisis de Complejidad por Línea</span>
+      <span style="color:var(--blue)">${answered}/${answerable.length} líneas respondidas</span>
+    </div>
+    <div class="code-lines-wrap">`;
+
+  ex.lines.forEach((line, idx) => {
+    let lineClass = 'code-line';
+    let statusIcon = '';
+
+    if (r.checked || r.revealed) {
+      if (line.cx === null) {
+        // no answer needed
+      } else {
+        const userAns = r.answers[idx];
+        if (r.revealed) {
+          lineClass += ' line-revealed';
+        } else if (userAns === line.cx) {
+          lineClass += ' line-correct';
+          statusIcon = '<span class="line-status" style="color:var(--green)">✓</span>';
+        } else {
+          lineClass += ' line-wrong';
+          statusIcon = '<span class="line-status" style="color:var(--red)">✗</span>';
+        }
+      }
+    }
+
+    html += `<div class="${lineClass}" id="codeline-${id}-${idx}">
+      <span class="line-num">${idx+1}</span>
+      <span class="line-code">${highlight(line.code)}</span>`;
+
+    if (line.cx !== null) {
+      const userAns = r.answers[idx];
+      let tokenCls = userAns ? 'selected' : '';
+      let tokenText = userAns || '— seleccionar —';
+
+      if (r.checked || r.revealed) {
+        if (r.revealed) {
+          tokenCls = 'revealed-ans';
+          tokenText = line.cx;
+        } else if (userAns === line.cx) {
+          tokenCls = 'correct';
+          tokenText = userAns;
+        } else {
+          tokenCls = 'wrong';
+          tokenText = userAns || '—';
+        }
+      }
+
+      const disabled = (r.checked || r.revealed) ? 'disabled-sel' : '';
+      html += `<div class="line-answer">
+        <div class="token-selector" id="ts-${id}-${idx}">
+          <div class="token-display ${tokenCls}" onclick="toggleDropdown('${id}','${idx}','${disabled}')">${tokenText}</div>
+          <div class="token-dropdown" id="td-${id}-${idx}">`;
+      TOKENS.forEach(t => {
+        html += `<div class="token-opt" onclick="selectToken('${id}','${idx}','${t}')">${t}</div>`;
+      });
+      html += `</div></div>${statusIcon}</div>`;
+    } else {
+      html += `<div class="line-answer no-answer"></div>`;
+    }
+
+    html += `</div>`;
+  });
+
+  html += `</div></div>`; // end code-lines-wrap + code-block
+
+  // Buttons
+  const allAnswered = answerable.every((_, i) => {
+    const li = ex.lines.indexOf(answerable[i]); // find real index
+    const realIdx = ex.lines.findIndex((l,k) => l === answerable[i]);
+    return r.answers[realIdx] !== undefined;
+  });
+
+  html += `<div class="btn-row">`;
+  if (!r.checked && !r.revealed) {
+    html += `<button class="btn btn-primary" onclick="checkAnswers(${id})">✓ Comprobar</button>`;
+    html += `<button class="btn btn-secondary" onclick="resetExercise(${id})">↺ Reiniciar</button>`;
+    html += `<button class="btn btn-warn" onclick="revealSolution(${id})">👁 Ver solución</button>`;
+  } else {
+    html += `<button class="btn btn-secondary" onclick="resetExercise(${id})">↺ Intentar de nuevo</button>`;
+    if (!r.revealed) html += `<button class="btn btn-warn" onclick="revealSolution(${id})">👁 Ver solución completa</button>`;
+  }
+  html += `</div>`;
+
+  // Result panel
+  if (r.checked && !r.revealed) {
+    const correctLines = answerable.filter((l,i) => {
+      const realIdx = ex.lines.findIndex(ll=>ll===answerable[i]);
+      return r.answers[realIdx] === l.cx;
+    }).length;
+    const pct = Math.round(correctLines/answerable.length*100);
+    const color = pct===100 ? 'var(--green)' : pct>=60 ? 'var(--yellow)' : 'var(--red)';
+
+    html += `<div class="result-panel show">
+      <h3>📊 Resultado</h3>
+      <div class="result-row"><span>Líneas correctas</span><span class="${pct===100?'result-correct':'result-wrong'}">${correctLines}/${answerable.length}</span></div>
+      <div class="result-row"><span>Complejidad del algoritmo</span><span class="total-complexity">${ex.answer}</span></div>
+      <div class="result-row"><span>Tu complejidad deducida</span><span style="color:${color}">${pct}% correcto</span></div>
+    </div>`;
+  }
+
+  // Solution panel
+  if (r.revealed) {
+    html += `<div class="solution-panel show">
+      <h3>👁 Solución completa</h3>`;
+    ex.lines.forEach((line, idx) => {
+      if (line.cx === null) return;
+      html += `<div class="solution-line"><span style="color:var(--yellow)">${line.cx}</span> <span style="color:var(--muted)">→ línea ${idx+1}:</span> <span style="color:var(--text);font-size:.8rem">${line.code.trim()}</span></div>`;
+      html += `<div class="solution-exp">${line.note}</div>`;
+    });
+    html += `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--yellow)">
+      <div style="font-size:.75rem;color:var(--yellow);font-weight:600;margin-bottom:4px">COMPLEJIDAD TOTAL: ${ex.answer}</div>
+      <div style="font-size:.8rem;color:var(--muted);line-height:1.6">${ex.explanation}</div>
+    </div></div>`;
+  }
+
+  document.getElementById('exercise-view').innerHTML = html;
+}
+
+// ─────────────────────────────────────────
+// DROPDOWN / MODAL LOGIC
+// ─────────────────────────────────────────
+// pending modal selection context
+let modalCtx = null;
+
+// Always use modal — works at any window width without breakpoint bugs
+function toggleDropdown(exId, lineIdx, disabled) {
+  if (disabled === 'disabled-sel') return;
+  openTokenModal(exId, lineIdx);
+}
+
+function closeAllDropdowns() {
+  // no-op kept for compatibility
+}
+
+// ── TOKEN MODAL (used at all sizes) ──
+function openTokenModal(exId, lineIdx) {
+  const ex = EXERCISES.find(e => e.id === parseInt(exId));
+  if (!ex) return;
+  const line = ex.lines[lineIdx];
+  modalCtx = { exId, lineIdx };
+
+  document.getElementById('token-modal-title').textContent = `Línea ${parseInt(lineIdx)+1} — elige la complejidad`;
+  document.getElementById('token-modal-code').textContent = line.code.trim();
+
+  const opts = document.getElementById('token-modal-opts');
+  opts.innerHTML = TOKENS.map(t =>
+    `<div class="token-modal-opt" onclick="selectTokenFromModal('${t}')">${t}</div>`
+  ).join('');
+
+  document.getElementById('token-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTokenModal() {
+  document.getElementById('token-modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  modalCtx = null;
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('token-modal-overlay')) closeTokenModal();
+}
+
+function selectTokenFromModal(token) {
+  if (!modalCtx) return;
+  const { exId, lineIdx } = modalCtx;
+  closeTokenModal();
+  selectToken(exId, lineIdx, token);
+}
+
+function selectToken(exId, lineIdx, token) {
+  const r = state.results[exId];
+  if (!r || r.checked || r.revealed) return;
+  r.answers[lineIdx] = token;
+  closeAllDropdowns();
+  renderExercise(parseInt(exId));
+}
+
+// ─────────────────────────────────────────
+// CHECK / REVEAL / RESET
+// ─────────────────────────────────────────
+function checkAnswers(id) {
+  const ex = EXERCISES.find(e=>e.id===id);
+  const r = state.results[id];
+  const answerable = ex.lines.filter(l => l.cx !== null);
+  const allAnswered = answerable.every((l, i) => {
+    const realIdx = ex.lines.findIndex(ll=>ll===answerable[i]);
+    return r.answers[realIdx] !== undefined;
+  });
+  if (!allAnswered) {
+    // allow partial check — just mark what's answered
+  }
+  const correctLines = answerable.filter((l,i) => {
+    const realIdx = ex.lines.findIndex(ll=>ll===answerable[i]);
+    return r.answers[realIdx] === l.cx;
+  }).length;
+  r.checked = true;
+  r.correct = correctLines === answerable.length;
+  updateStats();
+  updateSidebarBtn(id);
+  renderExercise(id);
+}
+
+function revealSolution(id) {
+  const r = state.results[id];
+  r.revealed = true;
+  r.checked = false;
+  r.correct = false;
+  updateStats();
+  updateSidebarBtn(id);
+  renderExercise(id);
+}
+
+function resetExercise(id) {
+  state.results[id] = { answers: {}, revealed: false, checked: false, correct: false };
+  updateStats();
+  updateSidebarBtn(id);
+  renderExercise(id);
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+buildSidebar();
+updateStats();
+</script>
+</body>
+</html>

@@ -62,15 +62,6 @@
   .container { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); }
 
   /* ── SIDEBAR ── */
-  aside {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 16px 0;
-    overflow-y: auto;
-    max-height: calc(100vh - 57px);
-    position: sticky;
-    top: 57px;
-  }
   .sidebar-title {
     font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: .08em; color: var(--muted); padding: 8px 16px 6px;
@@ -483,6 +474,41 @@
     .total-selector-box { flex-direction: column; align-items: flex-start; }
     .total-token-selector { width: 100%; }
   }
+
+  /* ── SIDEBAR TOGGLE ── */
+  .hamburger {
+    background: none; border: none; cursor: pointer;
+    padding: 4px 6px; border-radius: 5px;
+    display: flex; flex-direction: column; gap: 4px;
+    transition: background .15s;
+  }
+  .hamburger:hover { background: var(--surface2); }
+  .hamburger span {
+    display: block; width: 20px; height: 2px;
+    background: var(--text); border-radius: 2px;
+    transition: transform .25s, opacity .25s, width .25s;
+    transform-origin: center;
+  }
+  .sidebar-collapsed .hamburger span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .sidebar-collapsed .hamburger span:nth-child(2) { opacity: 0; width: 0; }
+  .sidebar-collapsed .hamburger span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 57px);
+    position: sticky;
+    top: 57px;
+    width: 260px;
+    min-width: 260px;
+    transition: width .25s ease, min-width .25s ease, padding .25s ease, border-width .25s ease;
+  }
+  .sidebar-collapsed aside {
+    width: 0; min-width: 0; padding: 0; border-right-width: 0;
+    overflow: hidden;
+  }
 </style>
 </head>
 <body>
@@ -498,6 +524,9 @@
 </div>
 
 <header>
+  <button class="hamburger" id="menu-btn" onclick="toggleSidebar()" title="Ocultar/mostrar ejercicios">
+    <span></span><span></span><span></span>
+  </button>
   <div class="logo">O<span>(</span>n<span>)</span>&nbsp;Trainer&nbsp;<span style="color:var(--muted);font-size:.8rem">— Algoritmia y Complejidad</span></div>
   <div class="stats-bar">
     <div class="stat"><div class="stat-val green" id="st-ok">0</div><div class="stat-lbl">Correctos</div></div>
@@ -1938,6 +1967,15 @@ function resetExercise(id) {
 // ─────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────
+function toggleSidebar() {
+  document.body.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('sidebarOpen', !document.body.classList.contains('sidebar-collapsed'));
+}
+// Restore sidebar state
+if (localStorage.getItem('sidebarOpen') === 'false') {
+  document.body.classList.add('sidebar-collapsed');
+}
+
 buildSidebar();
 updateStats();
 </script>

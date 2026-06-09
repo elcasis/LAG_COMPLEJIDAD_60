@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Complejidad Algorítmica – Entrenador de Examen</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -34,22 +34,32 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    min-height: -webkit-fill-available;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
   }
+  html { height: -webkit-fill-available; }
 
   /* ── HEADER ── */
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
+    padding: 12px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     position: sticky;
+    position: -webkit-sticky;
     top: 0;
     z-index: 100;
   }
-  .logo { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--blue); }
+  .logo { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--blue); white-space: nowrap; }
   .logo span { color: var(--muted); }
+  .logo-subtitle { color: var(--muted); font-size: .8rem; white-space: nowrap; }
   .stats-bar { display: flex; gap: 20px; }
   .stat { text-align: center; }
   .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
@@ -94,7 +104,12 @@
   .ex-btn.revealed::after { content: '👁'; margin-left: auto; font-size: .7rem; }
 
   /* ── MAIN ── */
-  main { padding: 32px; overflow-y: auto; }
+  main {
+    padding: 32px;
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   .ex-header { margin-bottom: 20px; }
   .ex-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
@@ -308,10 +323,14 @@
     padding: 20px 0 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,.7);
   }
-  /* On very small screens, slide up from bottom instead */
-  @media(max-width: 480px) {
+  /* On small screens, slide up from bottom (iOS sheet style) */
+  @media(max-width: 600px) {
     .token-modal-overlay { align-items: flex-end; padding: 0; }
-    .token-modal { border-radius: 16px 16px 0 0; max-width: 100%; padding-bottom: 32px; }
+    .token-modal {
+      border-radius: 16px 16px 0 0;
+      max-width: 100%;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
   }
   .token-modal-title {
     font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em;
@@ -331,72 +350,188 @@
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 12px 8px;
+    padding: 14px 8px;
+    min-height: 52px;
     text-align: center;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     color: var(--text);
     cursor: pointer;
     transition: background .1s, border-color .1s;
     -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .token-modal-opt:active { background: rgba(88,166,255,.15); border-color: var(--blue); }
+  .token-modal-opt:active { background: rgba(88,166,255,.2); border-color: var(--blue); transform: scale(0.97); }
   .token-modal-cancel {
     margin: 12px 16px 0;
     width: calc(100% - 32px);
-    padding: 12px;
+    padding: 13px;
+    min-height: 44px;
     background: none;
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     cursor: pointer;
     text-align: center;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* responsive */
+  /* ── MOBILE + SAFARI iOS ── */
   @media(max-width: 700px) {
-    .container { grid-template-columns: 1fr; }
-    aside { position: relative; max-height: 180px; top: 0; overflow-y: auto; }
-    main { padding: 12px; }
-    .stats-bar { gap: 10px; }
 
-    /* Code lines: stack vertically on mobile */
+    /* Header: always single line */
+    header { padding: 10px 14px; min-height: 52px; }
+    .logo { font-size: 0.88rem; }
+    .logo-subtitle { display: none; } /* hide on small screens */
+    .stats-bar { gap: 10px; }
+    .stat-val { font-size: 0.9rem; }
+    .stat-lbl { font-size: 0.58rem; }
+    .hamburger span { width: 18px; }
+
+    /* Container: single column */
+    .container { grid-template-columns: 1fr; }
+
+    /* Sidebar: compact horizontal pill strip */
+    aside {
+      position: relative !important;
+      top: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-height: none !important;
+      height: auto !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      align-items: center;
+      padding: 8px 12px !important;
+      gap: 6px !important;
+      border-right: none !important;
+      border-bottom: 1px solid var(--border);
+      box-sizing: border-box;
+      /* Hide scrollbar visually */
+      scrollbar-width: none;
+    }
+    aside::-webkit-scrollbar { display: none; }
+
+    .sidebar-section { margin: 0; display: contents; }
+    .sidebar-title { display: none; }
+
+    .ex-btn {
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 7px 11px;
+      font-size: 0.72rem;
+      border-left: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 6px;
+      background: var(--surface2);
+      color: var(--muted);
+      min-height: 36px;
+    }
+    .ex-btn.active {
+      border-left-color: transparent;
+      border-bottom-color: var(--blue);
+      color: var(--blue);
+    }
+    .ex-btn.done-ok::after  { content: ' ✓'; }
+    .ex-btn.done-fail::after{ content: ' ✗'; }
+    .ex-btn.revealed::after { content: ' 👁'; }
+
+    /* Sidebar collapsed: completely hidden */
+    .sidebar-collapsed aside { display: none !important; }
+    .sidebar-collapsed .container { grid-template-columns: 1fr; }
+
+    /* Main content */
+    main {
+      padding: 14px 12px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    /* Exercise header */
+    .ex-meta { flex-wrap: wrap; gap: 6px; }
+    .ex-title { font-size: 1rem; }
+    .ex-desc  { font-size: 0.8rem; }
+
+    /* Code block */
+    .code-header {
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.7rem;
+      padding: 8px 12px;
+    }
     .code-line {
       flex-direction: column;
       align-items: flex-start;
       min-height: unset;
-      padding: 8px 0;
+      padding: 8px 0 4px;
       gap: 6px;
     }
-    .code-line .line-num {
-      display: none; /* save space */
-    }
+    .code-line .line-num { display: none; }
     .line-code {
       padding: 0 12px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       white-space: pre-wrap;
-      word-break: break-all;
+      word-break: break-word;
       width: 100%;
+      box-sizing: border-box;
     }
     .line-answer {
-      min-width: unset;
+      min-width: unset !important;
       width: calc(100% - 24px);
-      margin: 0 12px;
+      margin: 0 12px 4px;
       padding: 0;
     }
     .token-display {
       width: 100%;
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 0.86rem;
+      min-height: 44px;
+      -webkit-appearance: none;
+      border-radius: 6px;
     }
-    .code-header { flex-direction: column; gap: 4px; }
-    .ex-title { font-size: 1rem; }
-    .btn { padding: 10px 16px; font-size: 0.82rem; }
+
+    /* Total complexity box */
+    .total-selector-box {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px;
+      gap: 10px;
+    }
+    .total-token-selector { width: 100%; }
+    .total-token-display  { min-height: 44px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+
+    /* Buttons */
+    .btn-row { gap: 8px; }
+    .btn {
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      min-height: 44px;
+      -webkit-appearance: none;
+      border-radius: 8px;
+      flex: 1;
+      text-align: center;
+    }
+
+    /* Result / solution panels */
+    .result-row { font-size: 0.78rem; }
+    .total-complexity { font-size: 0.95rem; }
+
+    /* Progress */
+    .progress-bar { margin-bottom: 14px; }
+
+    /* Welcome screen */
+    .welcome { height: auto; padding: 24px 0; }
+    .welcome h2 { font-size: 1.3rem; }
+    .welcome-grid { width: 100%; max-width: 320px; }
   }
 
   /* welcome */
@@ -498,8 +633,11 @@
     border-right: 1px solid var(--border);
     padding: 16px 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     max-height: calc(100vh - 57px);
+    max-height: calc(-webkit-fill-available - 57px);
     position: sticky;
+    position: -webkit-sticky;
     top: 57px;
     width: 260px;
     min-width: 260px;
@@ -530,7 +668,10 @@
   <button class="hamburger" id="menu-btn" onclick="toggleSidebar()" title="Ocultar/mostrar ejercicios">
     <span></span><span></span><span></span>
   </button>
-  <div class="logo">O<span>(</span>n<span>)</span>&nbsp;Trainer&nbsp;<span style="color:var(--muted);font-size:.8rem">— Algoritmia y Complejidad</span></div>
+  <div style="display:flex;flex-direction:column;line-height:1.2">
+    <div class="logo">O<span>(</span>n<span>)</span>&nbsp;Trainer</div>
+    <div class="logo-subtitle">— Algoritmia y Complejidad</div>
+  </div>
   <div class="stats-bar">
     <div class="stat"><div class="stat-val green" id="st-ok">0</div><div class="stat-lbl">Correctos</div></div>
     <div class="stat"><div class="stat-val yellow" id="st-total">0</div><div class="stat-lbl">Resueltos</div></div>
@@ -1880,11 +2021,15 @@ function openTokenModal(exId, lineIdx) {
 
   document.getElementById('token-modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
 }
 
 function closeTokenModal() {
   document.getElementById('token-modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
   modalCtx = null;
 }
 

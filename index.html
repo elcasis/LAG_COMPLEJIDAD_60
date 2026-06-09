@@ -424,6 +424,65 @@
   }
   .wcard .n { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; }
   .wcard .l { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+
+  /* ── TOTAL COMPLEXITY SELECTOR ── */
+  .total-selector-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .total-selector-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .total-selector-label span.hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .total-token-selector {
+    position: relative;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+  .total-token-display {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--muted);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: border-color .15s, color .15s;
+  }
+  .total-token-display:hover { border-color: var(--blue); color: var(--text); }
+  .total-token-display.selected { color: var(--cyan); border-color: var(--cyan); background: rgba(121,192,255,.1); }
+  .total-token-display.correct-total { color: var(--green); border-color: var(--green); background: rgba(63,185,80,.1); }
+  .total-token-display.wrong-total   { color: var(--red);   border-color: var(--red);   background: rgba(248,81,73,.1); }
+  .total-token-display.revealed-total { color: var(--yellow); border-color: var(--yellow); background: rgba(210,153,34,.1); }
+  @media(max-width: 500px) {
+    .total-selector-box { flex-direction: column; align-items: flex-start; }
+    .total-token-selector { width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -1583,7 +1642,7 @@ function loadExercise(id) {
   document.getElementById('exercise-view').style.display = 'block';
 
   if (!state.results[id]) {
-    state.results[id] = { answers: {}, revealed: false, checked: false, correct: false };
+    state.results[id] = { answers: {}, totalAnswer: null, revealed: false, checked: false, correct: false };
   }
 
   renderExercise(id);
@@ -1685,6 +1744,28 @@ function renderExercise(id) {
     return r.answers[realIdx] !== undefined;
   });
 
+  // ── Total complexity selector ──
+  const totalAns = r.totalAnswer || null;
+  let totalCls = totalAns ? 'selected' : '';
+  let totalText = totalAns || '— seleccionar complejidad total —';
+  if (r.checked || r.revealed) {
+    if (r.revealed) { totalCls = 'revealed-total'; totalText = ex.answer; }
+    else if (totalAns === ex.answer) { totalCls = 'correct-total'; totalText = totalAns; }
+    else { totalCls = 'wrong-total'; totalText = totalAns || '— sin respuesta —'; }
+  }
+  const totalDisabled = (r.checked || r.revealed) ? 'disabled-total' : '';
+  html += `<div class="total-selector-box">
+    <div class="total-selector-label">
+      <span>🎯 Complejidad total del algoritmo</span>
+      <span class="hint">— dedúcela combinando las líneas</span>
+    </div>
+    <div class="total-token-selector">
+      <div class="total-token-display ${totalCls}" onclick="toggleTotalDropdown(${id},'${totalDisabled}')">
+        <span>${totalText}</span><span style="font-size:.7rem;color:var(--muted)">▾</span>
+      </div>
+    </div>
+  </div>`;
+
   html += `<div class="btn-row">`;
   if (!r.checked && !r.revealed) {
     html += `<button class="btn btn-primary" onclick="checkAnswers(${id})">✓ Comprobar</button>`;
@@ -1703,13 +1784,16 @@ function renderExercise(id) {
       return r.answers[realIdx] === l.cx;
     }).length;
     const pct = Math.round(correctLines/answerable.length*100);
-    const color = pct===100 ? 'var(--green)' : pct>=60 ? 'var(--yellow)' : 'var(--red)';
+    const linesColor = pct===100 ? 'var(--green)' : pct>=60 ? 'var(--yellow)' : 'var(--red)';
+    const totalCorrect = r.totalAnswer === ex.answer;
+    const totalColor = totalCorrect ? 'var(--green)' : 'var(--red)';
+    const totalIcon = totalCorrect ? '✓' : '✗';
 
     html += `<div class="result-panel show">
       <h3>📊 Resultado</h3>
-      <div class="result-row"><span>Líneas correctas</span><span class="${pct===100?'result-correct':'result-wrong'}">${correctLines}/${answerable.length}</span></div>
-      <div class="result-row"><span>Complejidad del algoritmo</span><span class="total-complexity">${ex.answer}</span></div>
-      <div class="result-row"><span>Tu complejidad deducida</span><span style="color:${color}">${pct}% correcto</span></div>
+      <div class="result-row"><span>Complejidad total correcta</span><span class="total-complexity">${ex.answer}</span></div>
+      <div class="result-row"><span>Tu respuesta total</span><span style="color:${totalColor};font-family:'JetBrains Mono',monospace;font-weight:700">${totalIcon} ${r.totalAnswer || '— sin responder —'}</span></div>
+      <div class="result-row"><span>Líneas individuales</span><span style="color:${linesColor}">${correctLines}/${answerable.length} correctas</span></div>
     </div>`;
   }
 
@@ -1778,9 +1862,27 @@ function handleModalOverlayClick(e) {
 
 function selectTokenFromModal(token) {
   if (!modalCtx) return;
-  const { exId, lineIdx } = modalCtx;
+  const { exId, lineIdx, isTotal } = modalCtx;
   closeTokenModal();
-  selectToken(exId, lineIdx, token);
+  if (isTotal) {
+    state.results[exId].totalAnswer = token;
+    renderExercise(parseInt(exId));
+  } else {
+    selectToken(exId, lineIdx, token);
+  }
+}
+
+function toggleTotalDropdown(exId, disabled) {
+  if (disabled === 'disabled-total') return;
+  modalCtx = { exId, lineIdx: null, isTotal: true };
+  document.getElementById('token-modal-title').textContent = 'Complejidad total del algoritmo';
+  document.getElementById('token-modal-code').textContent = '¿Cuál es la complejidad O() final?';
+  const opts = document.getElementById('token-modal-opts');
+  opts.innerHTML = TOKENS.map(t =>
+    `<div class="token-modal-opt" onclick="selectTokenFromModal('${t}')">${t}</div>`
+  ).join('');
+  document.getElementById('token-modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function selectToken(exId, lineIdx, token) {
@@ -1810,7 +1912,7 @@ function checkAnswers(id) {
     return r.answers[realIdx] === l.cx;
   }).length;
   r.checked = true;
-  r.correct = correctLines === answerable.length;
+  r.correct = correctLines === answerable.length && r.totalAnswer === ex.answer;
   updateStats();
   updateSidebarBtn(id);
   renderExercise(id);

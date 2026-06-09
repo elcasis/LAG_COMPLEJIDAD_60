@@ -59,7 +59,7 @@
   .stat-val.blue { color: var(--blue); }
 
   /* ── LAYOUT ── */
-  .container { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); }
+  .container { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); transition: grid-template-columns .25s ease; }
 
   /* ── SIDEBAR ── */
   .sidebar-title {
@@ -508,6 +508,9 @@
   .sidebar-collapsed aside {
     width: 0; min-width: 0; padding: 0; border-right-width: 0;
     overflow: hidden;
+  }
+  .sidebar-collapsed .container {
+    grid-template-columns: 0 1fr;
   }
 </style>
 </head>
